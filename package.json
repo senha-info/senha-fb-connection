@@ -1,7 +1,7 @@
 {
   "name": "@senhainfo/fb-connection",
   "version": "1.0.0",
-  "repository": "https://github.com/senha-info/fb-connection.git",
+  "repository": "https://github.com/senha-info/senha-fb-connection.git",
   "author": "Bruno Gaspar <bruninhoogaspar@gmail.com>",
   "license": "MIT",
   "main": "./lib/index.js",
