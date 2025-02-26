@@ -1,0 +1,25 @@
+{
+  "name": "@senhainfo/fb-connection",
+  "version": "1.0.0",
+  "repository": "https://github.com/senha-info/fb-connection.git",
+  "author": "Bruno Gaspar <bruninhoogaspar@gmail.com>",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@senhainfo/shared-utils": "^1.0.1",
+    "node-firebird": "^1.1.9"
+  }
+}
