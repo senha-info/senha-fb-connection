@@ -127,10 +127,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.25.0.tgz#c8e119a30a7c8d60b9d2e22d2073722dde3b710b"
   integrity sha512-ZENoHJBxA20C2zFzh6AI4fT6RraMzjYw4xKWemRTRmRVtN9c5DcH9r/f2ihEkMjOW5eGgrwCslG/+Y/3bL+DHQ==
 
-"@senhainfo/shared-utils@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@senhainfo/shared-utils/-/shared-utils-1.0.1.tgz#241bef15b39abb5fe56d39f84669468b750f8f4b"
-  integrity sha512-IpqbjBGqP/nxT3c/1AEqEpgRaDuwuvVDD57MbIwl5h9croA5zK+F68/pGhHjtdkJmqMwicwJRfUTk6xyyDDrTw==
+"@senhainfo/shared-utils@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@senhainfo/shared-utils/-/shared-utils-1.0.4.tgz#2f807580d36196b8d31cf57a0a8ab66423658784"
+  integrity sha512-doS0IydrYK2Ip9432U1iFC7sKdlIAIS6FSJfQo4LhoPFXdKpp1XuIlasq8UicmQ9gk5MNKq53PHc4zpDliLEsg==
   dependencies:
     axios "^1.8.1"
     date-fns "^4.1.0"
