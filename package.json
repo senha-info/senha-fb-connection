@@ -10,7 +10,6 @@
     "lib"
   ],
   "scripts": {
-    "publish": "npm publish --access=public",
     "build": "tsc",
     "prepare": "npm run build"
   },
