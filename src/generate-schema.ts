@@ -16,6 +16,12 @@ interface RelationField {
 export class FirebirdGenerateSchema {
   constructor(private firebird: FirebirdConnection) {}
 
+  /**
+   * Generate Firebird schema
+   *
+   * @param {string} [destinationFolder] Destination folder to save the generated schema
+   * @returns {Promise<void>}
+   */
   async execute(destinationFolder?: string): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       const query = `

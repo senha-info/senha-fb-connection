@@ -74,6 +74,18 @@ export class FirebirdGenerateQuery {
     return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
   }
 
+  /**
+   * Generate Firebird query
+   *
+   * @param {GenerateQueryRequest<T>} request Request object
+   * @param {string} request.table Table name
+   * @param {PartialNullable<T>} request.data Data to be inserted or updated
+   * @param {keyof T} request.primaryKey Primary key of the table
+   * @param {keyof T[]} [request.ignoreCasing] Columns to ignore casing
+   * @param {keyof T[]} [request.matching] Columns to match
+   * @param {keyof T[]} [request.returning] Columns to return
+   * @returns {Promise<GenerateQueryResponse>} Generated query parts
+   */
   async execute<T>({
     type = "upsert",
     table,
@@ -124,20 +136,20 @@ export class FirebirdGenerateQuery {
 
     if (type === "upsert") {
       query = `
-      update or insert into ${table} (
-      \t\t${columnsStr}
-      ) values (
-      \t\t${valuesStr}
-      ) matching (${String(matching?.join(", ") ?? primaryKey)}) returning ${returning.join(", ")}
-    `;
+        update or insert into ${table} (
+        \t\t${columnsStr}
+        ) values (
+        \t\t${valuesStr}
+        ) matching (${String(matching?.join(", ") ?? primaryKey)}) returning ${returning.join(", ")}
+      `;
     }
 
     if (type === "update") {
       query = `
-      update ${table} set
-        ${valuesStr}
-      where ${String(primaryKey)} = ${escape(data[primaryKey as keyof typeof data])}
-    `;
+        update ${table} set
+          ${valuesStr}
+        where ${String(primaryKey)} = ${escape(data[primaryKey as keyof typeof data])}
+      `;
     }
 
     return {

@@ -47,6 +47,13 @@ export class FirebirdConnection {
     });
   }
 
+  /**
+   * Execute a query and return the result
+   *
+   * @param {string} query The query to be executed
+   * @param {(string | number)[]} params The parameters to be used in the query
+   * @returns {Promise<T[]>} The result of the query
+   */
   async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
     const connection = await this.getConnection();
 
