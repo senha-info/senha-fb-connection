@@ -21,14 +21,14 @@ export class GetDataFromTable {
     columns,
     conditions,
     joins = [],
-    orderBy = [],
+    orderBy,
   }: GetDataFromTableRequest): Promise<GetDataFromTableResponse> {
     const query = `
       select ${columns.join(",")}
       from ${table}
       ${joins.join(" ")}
-      ${conditions ? `where ${conditions.join(" and ")}` : ""}
-      ${orderBy ? `order by ${orderBy.join(",")}` : ""}
+      ${conditions && conditions.length ? `where ${conditions.join(" and ")}` : ""}
+      ${orderBy && orderBy.length ? `order by ${orderBy.join(",")}` : ""}
     `;
 
     const [rows, error] = await executePromise(this.firebird.execute<any>(query));
