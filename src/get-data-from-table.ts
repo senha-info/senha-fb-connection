@@ -9,9 +9,11 @@ interface GetDataFromTableRequest {
   orderBy?: string[];
 }
 
-type GetDataFromTableResponse = {
+type GenericResponse = {
   [key: string]: any;
 };
+
+type GetDataFromTableResponse<T> = T extends GenericResponse ? T : GenericResponse;
 
 export class GetDataFromTable {
   constructor(private firebird: FirebirdConnection) {}
@@ -32,7 +34,7 @@ export class GetDataFromTable {
     conditions,
     joins = [],
     orderBy,
-  }: GetDataFromTableRequest): Promise<T extends GetDataFromTableResponse ? T : GetDataFromTableResponse> {
+  }: GetDataFromTableRequest): Promise<GetDataFromTableResponse<T> | undefined> {
     const query = `
       select ${columns.join(",")}
       from ${table}
