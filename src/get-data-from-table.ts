@@ -16,13 +16,23 @@ type GetDataFromTableResponse = {
 export class GetDataFromTable {
   constructor(private firebird: FirebirdConnection) {}
 
-  async execute({
+  /**
+   * Get any data from a table, allowing joins and filters
+   *
+   * @param {GetDataFromTableRequest} request Request object
+   * @param {string[]} [request.columns] Columns to be selected
+   * @param {string[]} [request.conditions] Filters to be applied
+   * @param {string[]} [request.joins] Joins to be applied
+   * @param {string[]} [request.orderBy] Order by to be applied
+   * @returns {Promise<string>}
+   */
+  async execute<T>({
     table,
     columns,
     conditions,
     joins = [],
     orderBy,
-  }: GetDataFromTableRequest): Promise<GetDataFromTableResponse> {
+  }: GetDataFromTableRequest): Promise<T extends GetDataFromTableResponse ? T : GetDataFromTableResponse> {
     const query = `
       select ${columns.join(",")}
       from ${table}
