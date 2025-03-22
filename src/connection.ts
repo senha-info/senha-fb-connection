@@ -1,6 +1,29 @@
 import { executePromise } from "@senhainfo/shared-utils";
 import Firebird from "node-firebird";
 
+interface FirebirdOptions extends Omit<Firebird.Options, "lowercase_keys"> {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+
+  /**
+   * @default true
+   */
+  blobAsText?: boolean;
+
+  /**
+   * @default true
+   */
+  lowercaseKeys?: boolean;
+
+  /**
+   * @default 4096
+   */
+  pageSize?: number;
+}
+
 export class FirebirdConnection {
   private static instance: FirebirdConnection;
   private options: Firebird.Options = {
@@ -9,12 +32,22 @@ export class FirebirdConnection {
     pageSize: 4096,
   };
 
-  private constructor(options: Firebird.Options) {
-    Object.assign(this.options, options);
+  /**
+   * Firebird constructor is private, instantiate it using static getInstance or newInstance
+   * @param {FirebirdOptions} options The options to be used in the connection
+   */
+  private constructor(options: FirebirdOptions) {
+    const parsedOptions: Firebird.Options = {
+      ...options,
+      lowercase_keys: options.lowercaseKeys,
+    };
+
+    Object.assign(this.options, parsedOptions);
+
     this.initialize();
   }
 
-  public static getInstance(options: Firebird.Options): FirebirdConnection {
+  public static getInstance(options: FirebirdOptions): FirebirdConnection {
     if (!this.instance) {
       this.instance = new FirebirdConnection(options);
     }
@@ -22,7 +55,7 @@ export class FirebirdConnection {
     return this.instance;
   }
 
-  public static newInstance(options: Firebird.Options): FirebirdConnection {
+  public static newInstance(options: FirebirdOptions): FirebirdConnection {
     return new FirebirdConnection(options);
   }
 
