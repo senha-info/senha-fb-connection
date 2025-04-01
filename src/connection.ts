@@ -39,7 +39,7 @@ export class FirebirdConnection {
   private constructor(options: FirebirdOptions) {
     const parsedOptions: Firebird.Options = {
       ...options,
-      lowercase_keys: options.lowercaseKeys,
+      lowercase_keys: options.lowercaseKeys ?? this.options.lowercase_keys,
     };
 
     Object.assign(this.options, parsedOptions);
