@@ -25,7 +25,6 @@ interface FirebirdOptions extends Omit<Firebird.Options, "lowercase_keys"> {
 }
 
 export class FirebirdConnection {
-  private static instance: FirebirdConnection;
   private options: Firebird.Options = {
     blobAsText: true,
     lowercase_keys: true,
@@ -36,7 +35,7 @@ export class FirebirdConnection {
    * Firebird constructor is private, instantiate it using static getInstance or newInstance
    * @param {FirebirdOptions} options The options to be used in the connection
    */
-  private constructor(options: FirebirdOptions) {
+  constructor(options: FirebirdOptions) {
     const parsedOptions: Firebird.Options = {
       ...options,
       lowercase_keys: options.lowercaseKeys ?? this.options.lowercase_keys,
@@ -45,18 +44,6 @@ export class FirebirdConnection {
     Object.assign(this.options, parsedOptions);
 
     this.initialize();
-  }
-
-  public static getInstance(options: FirebirdOptions): FirebirdConnection {
-    if (!this.instance) {
-      this.instance = new FirebirdConnection(options);
-    }
-
-    return this.instance;
-  }
-
-  public static newInstance(options: FirebirdOptions): FirebirdConnection {
-    return new FirebirdConnection(options);
   }
 
   private async getConnection(): Promise<Firebird.Database> {
@@ -118,6 +105,65 @@ export class FirebirdConnection {
         });
       });
     });
+  }
+
+  /**
+   * Execute multiple queries and return the results
+   */
+  async transaction(): Promise<{
+    execute: <T>(query: string, params?: (string | number)[]) => Promise<T[]>;
+    commit: () => Promise<void>;
+  }> {
+    const connection = await this.getConnection();
+    let error = false;
+
+    const transaction = await new Promise<Firebird.Transaction>((resolve, reject) => {
+      connection.transaction(Firebird.ISOLATION_READ_COMMITTED, (error, transaction) => {
+        if (error) {
+          if (transaction) transaction.rollback();
+          return reject(error);
+        }
+        return resolve(transaction);
+      });
+    });
+
+    async function execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
+      return new Promise((resolve, reject) => {
+        transaction.query(query, params, (error, result) => {
+          if (error) {
+            transaction.rollback();
+            error = true;
+            return reject(error);
+          }
+
+          if (!Array.isArray(result)) {
+            result = [result];
+          }
+
+          return resolve(result);
+        });
+      });
+    }
+
+    const commit = async (): Promise<void> => {
+      if (!error) {
+        await new Promise<void>((resolve, reject) => {
+          transaction.commit((error) => {
+            if (error) {
+              transaction.rollback();
+              return reject(error);
+            }
+            connection.detach();
+            return resolve();
+          });
+        });
+      }
+    };
+
+    return {
+      execute,
+      commit,
+    };
   }
 
   private async initialize(): Promise<void> {
