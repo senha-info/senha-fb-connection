@@ -67,6 +67,19 @@ export class FirebirdConnection {
     });
   }
 
+  private async getTransaction(connection: Firebird.Database): Promise<Firebird.Transaction> {
+    return new Promise((resolve, reject) => {
+      connection.transaction(Firebird.ISOLATION_READ_COMMITTED, (error, transaction) => {
+        if (error) {
+          if (transaction) transaction.rollback();
+          return reject(error);
+        }
+
+        return resolve(transaction);
+      });
+    });
+  }
+
   /**
    * Execute a query and return the result
    *
@@ -76,93 +89,77 @@ export class FirebirdConnection {
    */
   async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
     const connection = await this.getConnection();
+    const transaction = await this.getTransaction(connection);
 
     return new Promise((resolve, reject) => {
-      connection.transaction(Firebird.ISOLATION_READ_COMMITTED, (error, transaction) => {
+      transaction.query(query, params, (error, result) => {
         if (error) {
-          if (transaction) transaction.rollback();
+          transaction.rollback();
           return reject(error);
         }
 
-        transaction.query(query, params, (error, result) => {
-          if (error) {
-            transaction.rollback();
-            return reject(error);
-          }
-
-          if (!Array.isArray(result)) {
-            result = [result];
-          }
-
-          transaction.commit((error) => {
-            if (error) {
-              transaction.rollback();
-              return reject(error);
-            }
-
-            return resolve(result);
-          });
-        });
-      });
-    });
-  }
-
-  /**
-   * Execute multiple queries and return the results
-   */
-  async transaction(): Promise<{
-    execute: <T>(query: string, params?: (string | number)[]) => Promise<T[]>;
-    commit: () => Promise<void>;
-  }> {
-    const connection = await this.getConnection();
-    let error = false;
-
-    const transaction = await new Promise<Firebird.Transaction>((resolve, reject) => {
-      connection.transaction(Firebird.ISOLATION_READ_COMMITTED, (error, transaction) => {
-        if (error) {
-          if (transaction) transaction.rollback();
-          return reject(error);
+        if (!Array.isArray(result)) {
+          result = [result];
         }
-        return resolve(transaction);
-      });
-    });
 
-    async function execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
-      return new Promise((resolve, reject) => {
-        transaction.query(query, params, (error, result) => {
+        transaction.commit((error) => {
           if (error) {
             transaction.rollback();
-            error = true;
             return reject(error);
-          }
-
-          if (!Array.isArray(result)) {
-            result = [result];
           }
 
           return resolve(result);
         });
       });
+    });
+  }
+
+  async transaction() {
+    let error = false;
+    const connection = await this.getConnection();
+    const transaction = await this.getTransaction(connection);
+
+    const results: any[] = [];
+
+    async function commit(): Promise<any[]> {
+      return new Promise((resolve, reject) => {
+        transaction.commit((error) => {
+          if (error) {
+            transaction.rollback();
+            return reject(error);
+          }
+
+          return resolve(results);
+        });
+      });
     }
 
-    const commit = async (): Promise<void> => {
-      if (!error) {
-        await new Promise<void>((resolve, reject) => {
-          transaction.commit((error) => {
-            if (error) {
-              transaction.rollback();
-              return reject(error);
-            }
-            connection.detach();
-            return resolve();
-          });
+    async function execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
+      return new Promise((resolve, reject) => {
+        if (error) {
+          transaction.rollback();
+          return reject("Transaction has already failed");
+        }
+
+        transaction.query(query, params, (error, result) => {
+          if (error) {
+            transaction.rollback();
+            return reject(error);
+          }
+
+          if (!Array.isArray(result)) {
+            result = [result];
+          }
+
+          results.push(result);
+          return resolve(result);
         });
-      }
-    };
+      });
+    }
 
     return {
-      execute,
       commit,
+      execute,
     };
   }
 
