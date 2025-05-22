@@ -66,7 +66,7 @@ export class FirebirdGenerateQuery {
 
       if (type === "upsert") {
         if (originalCharacterSet) {
-          value = `${key} = cast(${escape(value)} as varchar(${flength}))`;
+          value = `cast(${escape(value)} as varchar(${value.length || 1}))`;
         } else {
           value = `cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
         }
