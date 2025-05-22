@@ -128,13 +128,14 @@ export class FirebirdGenerateQuery {
       const key = keys[i];
 
       const originalCase = ignoreCasing.includes(key as keyof typeof data);
-      const characterSet = ignoreCharacterSet.includes(key as keyof typeof data);
+      const originalCharacterSet = ignoreCharacterSet.includes(key as keyof typeof data);
 
       const value = await this.toQuery({
         value: data[key as keyof typeof data] as string | number,
         table,
         key,
         originalCase,
+        originalCharacterSet,
         type,
       });
 
