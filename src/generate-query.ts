@@ -8,6 +8,7 @@ interface GenerateQueryRequest<T> {
   data: PartialNullable<T>;
   primaryKey: keyof T;
   ignoreCasing?: (keyof T)[];
+  ignoreCharacterSet?: (keyof T)[];
   matching?: (keyof T)[];
   returning?: (keyof T)[] | ["*"];
 }
@@ -23,13 +24,14 @@ interface ToQueryProps {
   table: string;
   key: string;
   originalCase?: boolean;
+  originalCharacterSet?: boolean;
   type: "upsert" | "update";
 }
 
 export class FirebirdGenerateQuery {
   constructor(private firebird: FirebirdConnection) {}
 
-  private async toQuery({ value, table, key, originalCase, type }: ToQueryProps) {
+  private async toQuery({ value, table, key, originalCase, originalCharacterSet, type }: ToQueryProps) {
     if (typeof value === "string") {
       const query = `
         select f.rdb$field_length flength, f.rdb$field_type ftype
@@ -63,9 +65,17 @@ export class FirebirdGenerateQuery {
       }
 
       if (type === "upsert") {
-        value = `cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+        if (originalCharacterSet) {
+          value = `${key} = cast(${escape(value)} as varchar(${flength}))`;
+        } else {
+          value = `cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+        }
       } else {
-        value = `${key} = cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+        if (originalCharacterSet) {
+          value = `${key} = cast(${escape(value)} as varchar(${value.length || 1}))`;
+        } else {
+          value = `${key} = cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+        }
       }
 
       return value;
@@ -92,6 +102,7 @@ export class FirebirdGenerateQuery {
     data,
     primaryKey,
     ignoreCasing = [],
+    ignoreCharacterSet = [],
     matching,
     returning = [primaryKey],
   }: GenerateQueryRequest<T>): Promise<GenerateQueryResponse> {
@@ -117,6 +128,7 @@ export class FirebirdGenerateQuery {
       const key = keys[i];
 
       const originalCase = ignoreCasing.includes(key as keyof typeof data);
+      const characterSet = ignoreCharacterSet.includes(key as keyof typeof data);
 
       const value = await this.toQuery({
         value: data[key as keyof typeof data] as string | number,
