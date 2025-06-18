@@ -2,9 +2,9 @@ import { executePromise } from "@senhainfo/shared-utils";
 import { PartialNullable } from "./@types/partial-nullable";
 import { FirebirdConnection, escape } from "./connection";
 
-interface GenerateQueryRequest<T> {
+interface GenerateQueryRequest<T, K extends string> {
   type?: "upsert" | "update";
-  table: string;
+  table: K;
   data: PartialNullable<T>;
   primaryKey: keyof T;
   ignoreCasing?: (keyof T)[];
@@ -28,7 +28,7 @@ interface ToQueryProps {
   type: "upsert" | "update";
 }
 
-export class FirebirdGenerateQuery {
+export class FirebirdGenerateQuery<K extends string> {
   constructor(private firebird: FirebirdConnection) {}
 
   private async toQuery({ value, table, key, originalCase, originalCharacterSet, type }: ToQueryProps) {
@@ -105,7 +105,7 @@ export class FirebirdGenerateQuery {
     ignoreCharacterSet = [],
     matching,
     returning = [primaryKey],
-  }: GenerateQueryRequest<T>): Promise<GenerateQueryResponse> {
+  }: GenerateQueryRequest<T, K>): Promise<GenerateQueryResponse> {
     for (const key in data) {
       if (data[key] === undefined) {
         delete data[key];

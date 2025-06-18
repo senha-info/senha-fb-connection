@@ -39,6 +39,7 @@ export class FirebirdGenerateSchema {
       }
 
       const schemas = [];
+      const tables = [];
 
       for (const { rname } of result) {
         const query = `
@@ -71,6 +72,10 @@ export class FirebirdGenerateSchema {
         const content = `export interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
 
         schemas.push(content);
+
+        const table = `${rname.toLowerCase()}: {} as ${interfaceName},`;
+
+        tables.push(table);
       }
 
       const destination = destinationFolder ?? path.join("src", "infra", "database", "schemas");
@@ -88,6 +93,11 @@ export class FirebirdGenerateSchema {
       }
 
       fs.appendFileSync(schemasPath, schemas.join("\n"));
+
+      fs.appendFileSync(schemasPath, "\nconst tables = {\n");
+      fs.appendFileSync(schemasPath, `  ${tables.join("\n  ")}`);
+      fs.appendFileSync(schemasPath, "\n} as const;\n");
+      fs.appendFileSync(schemasPath, "\nexport type Tables = keyof typeof tables;");
 
       console.info("\n✓ Firebird schema generated successfully\n");
 
