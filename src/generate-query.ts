@@ -7,7 +7,7 @@ interface GenerateQueryRequest<T, K extends string> {
   table: K;
   data: PartialNullable<T>;
   primaryKey: keyof T;
-  ignoreCasing?: (keyof T)[];
+  ignoreCase?: (keyof T)[];
   ignoreCharacterSet?: (keyof T)[];
   matching?: (keyof T)[];
   returning?: (keyof T)[] | ["*"];
@@ -48,6 +48,8 @@ export class FirebirdGenerateQuery<K extends string> {
       if (error) {
         throw new Error(error);
       }
+
+      value = value.replace(/\\/g, "/");
 
       if (!fields) {
         return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
@@ -101,7 +103,7 @@ export class FirebirdGenerateQuery<K extends string> {
     table,
     data,
     primaryKey,
-    ignoreCasing = [],
+    ignoreCase = [],
     ignoreCharacterSet = [],
     matching,
     returning = [primaryKey],
@@ -127,7 +129,7 @@ export class FirebirdGenerateQuery<K extends string> {
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
 
-      const originalCase = ignoreCasing.includes(key as keyof typeof data);
+      const originalCase = ignoreCase.includes(key as keyof typeof data);
       const originalCharacterSet = ignoreCharacterSet.includes(key as keyof typeof data);
 
       const value = await this.toQuery({
