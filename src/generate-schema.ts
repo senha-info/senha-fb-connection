@@ -15,11 +15,6 @@ interface GenerateSchemaOptions {
    * @default "fb-schema.ts"
    */
   fileName?: string;
-  /**
-   * Whether the dates should be converted to string (does not apply to timestamps)
-   * @default true
-   */
-  dateAsString?: boolean;
 }
 
 interface Relation {
@@ -35,7 +30,6 @@ export class FirebirdGenerateSchema {
   private options: Required<GenerateSchemaOptions> = {
     destinationFolder: path.join("src", "schemas"),
     fileName: "fb-schema.ts",
-    dateAsString: true,
   };
 
   /**
@@ -148,7 +142,6 @@ export class FirebirdGenerateSchema {
         return "number";
       case 12: // Date
       case 13: // Time
-        return this.options.dateAsString ? "string" : "Date";
       case 35: // Timestamp
         return "Date";
       case 37: // Varchar

@@ -49,14 +49,14 @@ export class FirebirdGenerateQuery<K extends string> {
 
   private async toQuery({ value, table, key, originalCase, originalCharacterSet, type }: ToQueryProps) {
     const query = `
-        select f.rdb$field_length flength, f.rdb$field_type ftype
-        from rdb$relation_fields rf
-        inner join rdb$fields f on rf.rdb$field_source = f.rdb$field_name
-        where
-          upper(rf.rdb$relation_name) = ${escape(table.toUpperCase())}
-          and
-          upper(rf.rdb$field_name) = ${escape(key.toUpperCase())}
-      `;
+      select f.rdb$field_length flength, f.rdb$field_type ftype
+      from rdb$relation_fields rf
+      inner join rdb$fields f on rf.rdb$field_source = f.rdb$field_name
+      where
+        upper(rf.rdb$relation_name) = ${escape(table.toUpperCase())}
+        and
+        upper(rf.rdb$field_name) = ${escape(key.toUpperCase())}
+    `;
 
     const [fields, error] = await executePromise(this.firebird.execute<{ flength: number; ftype: number }>(query));
 
@@ -73,18 +73,13 @@ export class FirebirdGenerateQuery<K extends string> {
     if (typeof value === "string") {
       value = value.replace(/\\/g, "/");
 
-      // 12 - Date | 13 - Time | 35 - Timestamp | 261 - Blob
-      if (!(ftype === 12) && !(ftype === 13) && !(ftype === 35) && !(ftype === 261)) {
+      // If not is 261 = Blob should format
+      if (ftype !== 261) {
         if (originalCase) {
           value = value.trim().slice(0, flength);
         } else {
           value = value.toUpperCase().trim().slice(0, flength);
         }
-      }
-
-      // 12 - Date | 13 - Time
-      if ([12, 13].includes(ftype)) {
-        value = this.formatDateTime(new Date(value), ftype);
       }
 
       if (type === "upsert") {
@@ -104,9 +99,8 @@ export class FirebirdGenerateQuery<K extends string> {
       return value;
     }
 
-    // 12 - Date | 13 - Time
-    if ([12, 13].includes(ftype)) {
-      value = this.formatDateTime(new Date(value), ftype);
+    if (value instanceof Date) {
+      value = this.formatDateTime(value, ftype);
     }
 
     return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
