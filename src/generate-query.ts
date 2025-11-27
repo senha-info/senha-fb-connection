@@ -20,7 +20,7 @@ interface GenerateQueryResponse {
 }
 
 interface ToQueryProps {
-  value: string | number;
+  value: string | number | Date;
   table: string;
   key: string;
   originalCase?: boolean;
@@ -31,9 +31,24 @@ interface ToQueryProps {
 export class FirebirdGenerateQuery<K extends string> {
   constructor(private firebird: FirebirdConnection) {}
 
+  private formatDateTime(value: Date, type: number) {
+    let parsedValue;
+
+    // 12 = Date
+    if (type === 12) {
+      parsedValue = value.toISOString().split("T")[0];
+    }
+
+    // 13 = Time
+    if (type === 13) {
+      parsedValue = value.toISOString().split("T")[1].split(".")[0];
+    }
+
+    return parsedValue || "";
+  }
+
   private async toQuery({ value, table, key, originalCase, originalCharacterSet, type }: ToQueryProps) {
-    if (typeof value === "string") {
-      const query = `
+    const query = `
         select f.rdb$field_length flength, f.rdb$field_type ftype
         from rdb$relation_fields rf
         inner join rdb$fields f on rf.rdb$field_source = f.rdb$field_name
@@ -43,19 +58,20 @@ export class FirebirdGenerateQuery<K extends string> {
           upper(rf.rdb$field_name) = ${escape(key.toUpperCase())}
       `;
 
-      const [fields, error] = await executePromise(this.firebird.execute<{ flength: number; ftype: number }>(query));
+    const [fields, error] = await executePromise(this.firebird.execute<{ flength: number; ftype: number }>(query));
 
-      if (error) {
-        throw new Error(error);
-      }
+    if (error) {
+      throw new Error(error);
+    }
 
+    if (!fields) {
+      return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
+    }
+
+    const [{ flength, ftype }] = fields;
+
+    if (typeof value === "string") {
       value = value.replace(/\\/g, "/");
-
-      if (!fields) {
-        return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
-      }
-
-      const [{ flength, ftype }] = fields;
 
       // 12 - Date | 13 - Time | 35 - Timestamp | 261 - Blob
       if (!(ftype === 12) && !(ftype === 13) && !(ftype === 35) && !(ftype === 261)) {
@@ -81,6 +97,11 @@ export class FirebirdGenerateQuery<K extends string> {
       }
 
       return value;
+    }
+
+    // 12 - Date | 13 - Time
+    if ([12, 13].includes(ftype)) {
+      value = this.formatDateTime(value as Date, ftype);
     }
 
     return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
