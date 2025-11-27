@@ -4,6 +4,24 @@ import path from "node:path";
 import { executePromise, FormatCase } from "@senhainfo/shared-utils";
 import { FirebirdConnection } from "./connection";
 
+interface GenerateSchemaOptions {
+  /**
+   * Folder to save generated schema file
+   * @default "./src/schemas"
+   */
+  destinationFolder?: string;
+  /**
+   * Name of the generated schema file
+   * @default "fb-schema.ts"
+   */
+  fileName?: string;
+  /**
+   * Whether the dates should be converted to string (does not apply to timestamps)
+   * @default true
+   */
+  dateAsString?: boolean;
+}
+
 interface Relation {
   rname: string;
 }
@@ -14,15 +32,31 @@ interface RelationField {
 }
 
 export class FirebirdGenerateSchema {
-  constructor(private firebird: FirebirdConnection) {}
+  private options: Required<GenerateSchemaOptions> = {
+    destinationFolder: path.join("src", "schemas"),
+    fileName: "fb-schema.ts",
+    dateAsString: true,
+  };
+
+  /**
+   * Constructor
+   * @param {FirebirdConnection} firebird - Firebird connection
+   * @param {GenerateSchemaOptions} options - Options to generate Firebird schema
+   *
+   * @example
+   * const generateSchema = new FirebirdGenerateSchema(firebird, { destinationFolder: "path/to/folder" });
+   */
+  constructor(private firebird: FirebirdConnection, options?: GenerateSchemaOptions) {
+    if (options) {
+      Object.assign(this.options, options);
+    }
+  }
 
   /**
    * Generate Firebird schema
-   *
-   * @param {string} [destinationFolder] Destination folder to save the generated schema
    * @returns {Promise<void>}
    */
-  async execute(destinationFolder?: string): Promise<void> {
+  async execute(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       const query = `
         select trim(rdb$relation_name) as rname
@@ -78,7 +112,7 @@ export class FirebirdGenerateSchema {
         tables.push(table);
       }
 
-      const destination = destinationFolder ?? path.join("src", "infra", "database", "schemas");
+      const destination = this.options.destinationFolder;
 
       if (!fs.existsSync(destination)) {
         fs.mkdirSync(destination, {
@@ -86,7 +120,7 @@ export class FirebirdGenerateSchema {
         });
       }
 
-      const schemasPath = path.join(destination, "firebird-schema.ts");
+      const schemasPath = path.join(destination, this.options.fileName);
 
       if (fs.existsSync(schemasPath)) {
         fs.unlinkSync(schemasPath);
@@ -114,7 +148,7 @@ export class FirebirdGenerateSchema {
         return "number";
       case 12: // Date
       case 13: // Time
-        return "string";
+        return this.options.dateAsString ? "string" : "Date";
       case 35: // Timestamp
         return "Date";
       case 37: // Varchar
