@@ -82,6 +82,11 @@ export class FirebirdGenerateQuery<K extends string> {
         }
       }
 
+      // 12 - Date | 13 - Time
+      if ([12, 13].includes(ftype)) {
+        value = this.formatDateTime(new Date(value), ftype);
+      }
+
       if (type === "upsert") {
         if (originalCharacterSet) {
           value = `cast(${escape(value)} as varchar(${value.length || 1}))`;
@@ -101,7 +106,7 @@ export class FirebirdGenerateQuery<K extends string> {
 
     // 12 - Date | 13 - Time
     if ([12, 13].includes(ftype)) {
-      value = this.formatDateTime(value as Date, ftype);
+      value = this.formatDateTime(new Date(value), ftype);
     }
 
     return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
