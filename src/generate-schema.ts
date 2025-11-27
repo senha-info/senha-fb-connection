@@ -137,6 +137,7 @@ export class FirebirdGenerateSchema {
     switch (fieldType) {
       case 7: // Smallint
       case 8: // Integer
+      case 10: // Float
       case 16: // Bigint
       case 27: // Double Precision
         return "number";
@@ -144,6 +145,7 @@ export class FirebirdGenerateSchema {
       case 13: // Time
       case 35: // Timestamp
         return "Date";
+      case 14: // Char
       case 37: // Varchar
       case 261: // Blob
         return "string";
