@@ -44,6 +44,11 @@ export class FirebirdGenerateQuery<K extends string> {
       parsedValue = value.toISOString().split("T")[1].split(".")[0];
     }
 
+    // 35 = Timestamp
+    if (type === 35) {
+      parsedValue = new Date(value.valueOf() + value.getTimezoneOffset() * 60 * 1000);
+    }
+
     return parsedValue || "";
   }
 
