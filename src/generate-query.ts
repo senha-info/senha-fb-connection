@@ -32,7 +32,7 @@ export class FirebirdGenerateQuery<K extends string> {
   constructor(private firebird: FirebirdConnection) {}
 
   private formatDateTime(value: Date, type: number) {
-    let parsedValue;
+    let parsedValue: string | Date = value;
 
     // 12 = Date
     if (type === 12) {
@@ -64,7 +64,7 @@ export class FirebirdGenerateQuery<K extends string> {
       throw new Error(error);
     }
 
-    if (!fields) {
+    if (!fields || !fields.length) {
       return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
     }
 
