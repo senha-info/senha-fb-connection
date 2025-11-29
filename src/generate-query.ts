@@ -78,8 +78,8 @@ export class FirebirdGenerateQuery<K extends string> {
     if (typeof value === "string") {
       value = value.replace(/\\/g, "/");
 
-      // If not is 261 = Blob should format
-      if (ftype !== 261) {
+      // 12 - Date | 13 - Time | 35 - Timestamp | 261 - Blob
+      if (![12, 13, 35, 261].includes(ftype)) {
         if (originalCase) {
           value = value.trim().slice(0, flength);
         } else {
