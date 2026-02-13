@@ -40,7 +40,10 @@ export class FirebirdGenerateSchema {
    * @example
    * const generateSchema = new FirebirdGenerateSchema(firebird, { destinationFolder: "path/to/folder" });
    */
-  constructor(private firebird: FirebirdConnection, options?: GenerateSchemaOptions) {
+  constructor(
+    private firebird: FirebirdConnection,
+    options?: GenerateSchemaOptions,
+  ) {
     if (options) {
       Object.assign(this.options, options);
     }
@@ -97,7 +100,7 @@ export class FirebirdGenerateSchema {
         const formatCase = new FormatCase();
         const interfaceName = formatCase.toPascalCase(rname);
         const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join("\n  ");
-        const content = `export interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
+        const content = `/**\n * Tabela: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
 
         schemas.push(content);
 
@@ -119,6 +122,8 @@ export class FirebirdGenerateSchema {
       if (fs.existsSync(schemasPath)) {
         fs.unlinkSync(schemasPath);
       }
+
+      fs.appendFileSync(schemasPath, "/* Auto generated, do not edit */\n");
 
       fs.appendFileSync(schemasPath, schemas.join("\n"));
 
