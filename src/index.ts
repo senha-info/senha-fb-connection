@@ -1,3 +1,5 @@
+export * from "./build-where";
+export * from "./cast";
 export * from "./connection";
 export * from "./generate-query";
 export * from "./generate-schema";
