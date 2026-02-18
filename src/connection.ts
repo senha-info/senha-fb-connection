@@ -32,7 +32,6 @@ export class FirebirdConnection {
   };
 
   /**
-   * Firebird constructor is private, instantiate it using static getInstance or newInstance
    * @param {FirebirdOptions} options The options to be used in the connection
    */
   constructor(options: FirebirdOptions) {
