@@ -1,13 +1,13 @@
-interface Condition<T> {
-  value: T;
-  apply: boolean;
-  text: (value: NonNullable<T>) => string;
+interface WhereParams {
+  value: unknown;
+  condition: boolean;
+  query: (value: string) => string;
 }
 
-export function buildWhere<T>(conditions: Condition<T>[]): string {
-  const where = conditions
-    .filter((condition) => condition.apply && condition.value !== undefined)
-    .map((condition) => condition.text(condition.value!))
+function buildWhere(params: WhereParams[]) {
+  const where = params
+    .filter((param) => param.condition && param.value !== undefined)
+    .map((param) => param.query(String(param.value)))
     .join(" and ");
 
   return where ? `where ${where}` : "";
