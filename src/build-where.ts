@@ -4,7 +4,7 @@ interface WhereParams {
   query: (value: string) => string;
 }
 
-function buildWhere(params: WhereParams[]) {
+export function buildWhere(params: WhereParams[]) {
   const where = params
     .filter((param) => param.condition && param.value !== undefined)
     .map((param) => param.query(String(param.value)))
