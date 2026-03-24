@@ -34,19 +34,35 @@ export class FirebirdGenerateQuery<K extends string> {
   private formatDateTime(value: Date, type: number) {
     let parsedValue: string | Date = value;
 
+    const formatter = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(value);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+
     // 12 = Date
     if (type === 12) {
-      parsedValue = value.toISOString().split("T")[0];
+      parsedValue = `${get("year")}-${get("month")}-${get("day")}`;
     }
 
     // 13 = Time
     if (type === 13) {
-      parsedValue = value.toISOString().split("T")[1].split(".")[0];
+      parsedValue = `${get("hour")}:${get("minute")}:${get("second")}`;
     }
 
     // 35 = Timestamp
     if (type === 35) {
-      parsedValue = new Date(value.valueOf() + value.getTimezoneOffset() * 60 * 1000);
+      parsedValue = new Date(
+        `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`,
+      );
     }
 
     return parsedValue || "";
