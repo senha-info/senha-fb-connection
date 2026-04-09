@@ -8,6 +8,7 @@
     "target": "ES6",
     "strict": true,
     "esModuleInterop": true,
+    "rootDir": "./src",
     "outDir": "./lib",
     "declaration": true,
     "declarationMap": true,

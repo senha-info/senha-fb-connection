@@ -53,13 +53,13 @@ export class FirebirdConnection {
           return reject(error);
         }
 
-        database.on("commit", () => {
-          database.detach();
-        });
+        // database.on("commit", () => {
+        //   database.detach();
+        // });
 
-        database.on("rollback", () => {
-          database.detach();
-        });
+        // database.on("rollback", () => {
+        //   database.detach();
+        // });
 
         return resolve(database);
       });
@@ -88,12 +88,22 @@ export class FirebirdConnection {
    */
   async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
     const connection = await this.getConnection();
-    const transaction = await this.getTransaction(connection);
+
+    let transaction: Firebird.Transaction;
+
+    try {
+      transaction = await this.getTransaction(connection);
+    } catch (error) {
+      connection.detach();
+      throw error;
+    }
 
     return new Promise((resolve, reject) => {
       transaction.query(query, params, (error, result) => {
         if (error) {
-          transaction.rollback();
+          transaction.rollback(() => {
+            connection.detach();
+          });
           return reject(error);
         }
 
@@ -103,10 +113,13 @@ export class FirebirdConnection {
 
         transaction.commit((error) => {
           if (error) {
-            transaction.rollback();
+            transaction.rollback(() => {
+              connection.detach();
+            });
             return reject(error);
           }
 
+          connection.detach();
           return resolve(result);
         });
       });
@@ -114,9 +127,17 @@ export class FirebirdConnection {
   }
 
   async transaction() {
-    let error = false;
+    let failed = false;
     const connection = await this.getConnection();
-    const transaction = await this.getTransaction(connection);
+
+    let transaction: Firebird.Transaction;
+
+    try {
+      transaction = await this.getTransaction(connection);
+    } catch (error) {
+      connection.detach();
+      throw error;
+    }
 
     const results: any[] = [];
 
@@ -124,10 +145,14 @@ export class FirebirdConnection {
       return new Promise((resolve, reject) => {
         transaction.commit((error) => {
           if (error) {
-            transaction.rollback();
+            transaction.rollback(() => {
+              connection.detach();
+            });
+
             return reject(error);
           }
 
+          connection.detach();
           return resolve(results);
         });
       });
@@ -135,14 +160,18 @@ export class FirebirdConnection {
 
     async function execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
       return new Promise((resolve, reject) => {
-        if (error) {
-          transaction.rollback();
+        if (failed) {
           return reject("Transaction has already failed");
         }
 
         transaction.query(query, params, (error, result) => {
           if (error) {
-            transaction.rollback();
+            failed = true;
+
+            transaction.rollback(() => {
+              connection.detach();
+            });
+
             return reject(error);
           }
 
