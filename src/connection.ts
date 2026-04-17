@@ -1,7 +1,8 @@
-import { executePromise } from "@senhainfo/shared-utils";
-import Firebird from "node-firebird";
+import { executePromise } from '@senhainfo/shared-utils';
+import Firebird from 'node-firebird';
+import pLimit from 'p-limit';
 
-interface FirebirdOptions extends Omit<Firebird.Options, "lowercase_keys"> {
+interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
   host: string;
   port: number;
   user: string;
@@ -22,6 +23,11 @@ interface FirebirdOptions extends Omit<Firebird.Options, "lowercase_keys"> {
    * @default 4096
    */
   pageSize?: number;
+
+  /**
+   * @default 20
+   */
+  concurrency?: number;
 }
 
 export class FirebirdConnection {
@@ -31,10 +37,18 @@ export class FirebirdConnection {
     pageSize: 4096,
   };
 
+  private limit = pLimit(20);
+
   /**
    * @param {FirebirdOptions} options The options to be used in the connection
    */
   constructor(options: FirebirdOptions) {
+    if (options.concurrency) {
+      this.limit.concurrency = options.concurrency;
+    }
+
+    delete options.concurrency;
+
     const parsedOptions: Firebird.Options = {
       ...options,
       lowercase_keys: options.lowercaseKeys ?? this.options.lowercase_keys,
@@ -45,161 +59,52 @@ export class FirebirdConnection {
     this.initialize();
   }
 
-  private async getConnection(): Promise<Firebird.Database> {
-    return new Promise((resolve, reject) => {
-      Firebird.attach(this.options, (error, database) => {
-        if (error) {
-          if (database) database.detach();
-          return reject(error);
-        }
-
-        // database.on("commit", () => {
-        //   database.detach();
-        // });
-
-        // database.on("rollback", () => {
-        //   database.detach();
-        // });
-
-        return resolve(database);
-      });
-    });
-  }
-
-  private async getTransaction(connection: Firebird.Database): Promise<Firebird.Transaction> {
-    return new Promise((resolve, reject) => {
-      connection.transaction(Firebird.ISOLATION_READ_COMMITTED, (error, transaction) => {
-        if (error) {
-          if (transaction) transaction.rollback();
-          return reject(error);
-        }
-
-        return resolve(transaction);
-      });
-    });
-  }
-
   /**
    * Execute a query and return the result
-   *
    * @param {string} query The query to be executed
    * @param {(string | number)[]} params The parameters to be used in the query
    * @returns {Promise<T[]>} The result of the query
+   * @example
+   * const connection = new FirebirdConnection(options);
+   * const result = await connection.execute('SELECT * FROM TABLE', []);
+   * console.log(result); // Prints the result of the query
    */
-  async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
-    const connection = await this.getConnection();
-
-    let transaction: Firebird.Transaction;
-
-    try {
-      transaction = await this.getTransaction(connection);
-    } catch (error) {
-      connection.detach();
-      throw error;
-    }
-
-    return new Promise((resolve, reject) => {
-      transaction.query(query, params, (error, result) => {
-        if (error) {
-          transaction.rollback(() => {
-            connection.detach();
-          });
-          return reject(error);
-        }
-
-        if (!Array.isArray(result)) {
-          result = [result];
-        }
-
-        transaction.commit((error) => {
+  public async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
+    return this.limit(() => {
+      return new Promise((resolve, reject) => {
+        Firebird.attach(this.options, (error, database) => {
           if (error) {
-            transaction.rollback(() => {
-              connection.detach();
-            });
+            if (database) database.detach();
             return reject(error);
           }
 
-          connection.detach();
-          return resolve(result);
+          database.query(query, params, (error, result) => {
+            if (database) database.detach();
+
+            if (error) {
+              return reject(error);
+            }
+
+            if (!Array.isArray(result)) {
+              result = [result];
+            }
+
+            return resolve(result);
+          });
         });
       });
     });
   }
 
-  async transaction() {
-    let failed = false;
-    const connection = await this.getConnection();
-
-    let transaction: Firebird.Transaction;
-
-    try {
-      transaction = await this.getTransaction(connection);
-    } catch (error) {
-      connection.detach();
-      throw error;
-    }
-
-    const results: any[] = [];
-
-    async function commit(): Promise<any[]> {
-      return new Promise((resolve, reject) => {
-        transaction.commit((error) => {
-          if (error) {
-            transaction.rollback(() => {
-              connection.detach();
-            });
-
-            return reject(error);
-          }
-
-          connection.detach();
-          return resolve(results);
-        });
-      });
-    }
-
-    async function execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
-      return new Promise((resolve, reject) => {
-        if (failed) {
-          return reject("Transaction has already failed");
-        }
-
-        transaction.query(query, params, (error, result) => {
-          if (error) {
-            failed = true;
-
-            transaction.rollback(() => {
-              connection.detach();
-            });
-
-            return reject(error);
-          }
-
-          if (!Array.isArray(result)) {
-            result = [result];
-          }
-
-          results.push(result);
-          return resolve(result);
-        });
-      });
-    }
-
-    return {
-      commit,
-      execute,
-    };
-  }
-
   private async initialize(): Promise<void> {
-    const domainName = "VARCHAR5000";
+    const domain = 'VARCHAR5000';
 
     const select = `
-      select rdb$field_name as fname
-      from rdb$fields where rdb$field_name = ?
+      SELECT RDB$FIELD_NAME AS FNAME
+      FROM RDB$FIELDS WHERE RDB$FIELD_NAME = ?
     `;
 
-    const [fields, error] = await executePromise(this.execute<{ fname: string }>(select, [domainName]));
+    const [fields, error] = await executePromise(this.execute<{ fname: string }>(select, [domain]));
 
     if (error) {
       throw new Error(error);
@@ -209,7 +114,7 @@ export class FirebirdConnection {
 
     if (!field) {
       const insert = `
-        CREATE DOMAIN ${domainName} AS
+        CREATE DOMAIN ${domain} AS
         VARCHAR(5000) CHARACTER SET WIN1252
         COLLATE WIN_PTBR;
       `;
@@ -217,6 +122,6 @@ export class FirebirdConnection {
       await this.execute(insert);
     }
   }
-}
 
-export const escape = Firebird.escape;
+  public escape = Firebird.escape;
+}

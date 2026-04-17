@@ -1,5 +1,5 @@
-import { executePromise } from "@senhainfo/shared-utils";
-import { FirebirdConnection } from "./connection";
+import { executePromise } from '@senhainfo/shared-utils';
+import { FirebirdConnection } from './connection';
 
 interface GetDataFromTableRequest {
   table: string;
@@ -36,11 +36,11 @@ export class GetDataFromTable {
     orderBy,
   }: GetDataFromTableRequest): Promise<GetDataFromTableResponse<T> | undefined> {
     const query = `
-      select ${columns.join(",")}
+      select ${columns.join(',')}
       from ${table}
-      ${joins.join(" ")}
-      ${conditions && conditions.length ? `where ${conditions.join(" and ")}` : ""}
-      ${orderBy && orderBy.length ? `order by ${orderBy.join(",")}` : ""}
+      ${joins.join(' ')}
+      ${conditions && conditions.length ? `where ${conditions.join(' and ')}` : ''}
+      ${orderBy && orderBy.length ? `order by ${orderBy.join(',')}` : ''}
     `;
 
     const [rows, error] = await executePromise(this.firebird.execute<any>(query));

@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
 
-import { executePromise, FormatCase } from "@senhainfo/shared-utils";
-import { FirebirdConnection } from "./connection";
+import { executePromise, FormatCase } from '@senhainfo/shared-utils';
+import { FirebirdConnection } from './connection';
 
 interface GenerateSchemaOptions {
   /**
@@ -28,8 +28,8 @@ interface RelationField {
 
 export class FirebirdGenerateSchema {
   private options: Required<GenerateSchemaOptions> = {
-    destinationFolder: path.join("src", "schemas"),
-    fileName: "fb-schema.ts",
+    destinationFolder: path.join('src', 'schemas'),
+    fileName: 'fb-schema.ts',
   };
 
   /**
@@ -99,7 +99,7 @@ export class FirebirdGenerateSchema {
 
         const formatCase = new FormatCase();
         const interfaceName = formatCase.toPascalCase(rname);
-        const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join("\n  ");
+        const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join('\n  ');
         const content = `/**\n * Tabela: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
 
         schemas.push(content);
@@ -123,16 +123,16 @@ export class FirebirdGenerateSchema {
         fs.unlinkSync(schemasPath);
       }
 
-      fs.appendFileSync(schemasPath, "/* Auto generated, do not edit */\n");
+      fs.appendFileSync(schemasPath, '/* Auto generated, do not edit */\n');
 
-      fs.appendFileSync(schemasPath, schemas.join("\n"));
+      fs.appendFileSync(schemasPath, schemas.join('\n'));
 
-      fs.appendFileSync(schemasPath, "\nconst tables = {\n");
-      fs.appendFileSync(schemasPath, `  ${tables.join("\n  ")}`);
-      fs.appendFileSync(schemasPath, "\n} as const;\n");
-      fs.appendFileSync(schemasPath, "\nexport type Tables = keyof typeof tables;");
+      fs.appendFileSync(schemasPath, '\nconst tables = {\n');
+      fs.appendFileSync(schemasPath, `  ${tables.join('\n  ')}`);
+      fs.appendFileSync(schemasPath, '\n} as const;\n');
+      fs.appendFileSync(schemasPath, '\nexport type Tables = keyof typeof tables;');
 
-      console.info("\n✓ Firebird schema generated successfully\n");
+      console.info('\n✓ Firebird schema generated successfully\n');
 
       return resolve();
     });
@@ -145,17 +145,17 @@ export class FirebirdGenerateSchema {
       case 10: // Float
       case 16: // Bigint
       case 27: // Double Precision
-        return "number";
+        return 'number';
       case 12: // Date
       case 13: // Time
       case 35: // Timestamp
-        return "Date";
+        return 'Date';
       case 14: // Char
       case 37: // Varchar
       case 261: // Blob
-        return "string";
+        return 'string';
       default: // Unknown
-        return "never";
+        return 'never';
     }
   }
 }

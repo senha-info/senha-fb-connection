@@ -1,5 +1,5 @@
-import { executePromise } from "@senhainfo/shared-utils";
-import { FirebirdConnection } from "./connection";
+import { executePromise } from '@senhainfo/shared-utils';
+import { FirebirdConnection } from './connection';
 
 interface GetNextIdForTableRequest {
   table: string;
@@ -23,7 +23,7 @@ export class GetNextIdForTable {
     const name = isPrimaryKey ? `gen_${table}_id` : `gen_${table}`;
 
     const [ids, error] = await executePromise(
-      this.firebird.execute<{ gen_id: number }>(`select gen_id(${name}, 1) from rdb$database`)
+      this.firebird.execute<{ gen_id: number }>(`select gen_id(${name}, 1) from rdb$database`),
     );
 
     if (error) {

@@ -28,7 +28,8 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@senhainfo/shared-utils": "^1.1.10",
-    "node-firebird": "^1.1.9"
+    "@senhainfo/shared-utils": "^1.5.22",
+    "node-firebird": "^1.1.9",
+    "p-limit": "^7.3.0"
   }
 }

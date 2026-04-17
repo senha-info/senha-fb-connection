@@ -1,5 +1,5 @@
-import { executePromise } from "@senhainfo/shared-utils";
-import { escape, FirebirdConnection } from "./connection";
+import { executePromise } from '@senhainfo/shared-utils';
+import { FirebirdConnection } from './connection';
 
 interface ParseAttributeProps {
   key: string;
@@ -25,13 +25,13 @@ export class GenerateSearchTerms {
    */
   async execute<T>({ search, primaryKey, attributes }: GetSearchTermsRequest<T>): Promise<string> {
     if (!search || !primaryKey) {
-      return "";
+      return '';
     }
 
-    const splittedSearch = search.split(" ");
+    const splittedSearch = search.split(' ');
     const searchAttributes: string[] = [];
 
-    let searchTerms = "";
+    let searchTerms = '';
 
     for await (const attribute of attributes) {
       const parsedAttribute = await this.parseAttribute({ key: attribute as string });
@@ -44,11 +44,11 @@ export class GenerateSearchTerms {
       searchTerms += `upper(cast(${searchAttributesText} as VARCHAR5000)) like '%${word.toUpperCase()}%'`;
 
       if (index !== splittedSearch.length - 1) {
-        searchTerms += " and ";
+        searchTerms += ' and ';
       }
     });
 
-    return `upper(${primaryKey as string}) = upper(${escape(search)}) or (${searchTerms})`;
+    return `upper(${primaryKey as string}) = upper(${this.firebird.escape(search)}) or (${searchTerms})`;
   }
 
   private async parseAttribute({ key }: ParseAttributeProps) {
@@ -64,11 +64,11 @@ export class GenerateSearchTerms {
           and
           c.rdb$character_set_id = f.rdb$character_set_id
       )
-      where upper(rf.rdb$field_name) = upper(${escape(key)})
+      where upper(rf.rdb$field_name) = upper(${this.firebird.escape(key)})
     `;
 
     const [fields, error] = await executePromise(
-      this.firebird.execute<{ ftype: number; fsource: string; cname?: string }>(query)
+      this.firebird.execute<{ ftype: number; fsource: string; cname?: string }>(query),
     );
 
     if (error) {
@@ -78,12 +78,12 @@ export class GenerateSearchTerms {
     const [{ ftype, fsource, cname }] = fields;
 
     // 37 - Varchar
-    if (ftype === 37 && cname === "NONE") {
+    if (ftype === 37 && cname === 'NONE') {
       return `cast(${key} as VARCHAR(120) character set WIN1252)`;
     }
 
     // 37 - Varchar
-    if (ftype === 37 && !fsource.startsWith("VARCHAR")) {
+    if (ftype === 37 && !fsource.startsWith('VARCHAR')) {
       return `cast(${key} as VARCHAR(500) character set WIN1252)`;
     }
 

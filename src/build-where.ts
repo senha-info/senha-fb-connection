@@ -8,7 +8,7 @@ export function buildWhere(params: WhereParams[]) {
   const where = params
     .filter((param) => param.condition && param.value !== undefined)
     .map((param) => param.query(String(param.value)))
-    .join(" and ");
+    .join(' and ');
 
-  return where ? `where ${where}` : "";
+  return where ? `where ${where}` : '';
 }

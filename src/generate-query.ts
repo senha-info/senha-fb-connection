@@ -1,16 +1,16 @@
-import { executePromise } from "@senhainfo/shared-utils";
-import { PartialNullable } from "./@types/partial-nullable";
-import { FirebirdConnection, escape } from "./connection";
+import { executePromise } from '@senhainfo/shared-utils';
+import { PartialNullable } from './@types/partial-nullable';
+import { FirebirdConnection } from './connection';
 
 interface GenerateQueryRequest<T, K extends string> {
-  type?: "upsert" | "update";
+  type?: 'upsert' | 'update';
   table: K;
   data: PartialNullable<T>;
   primaryKey: keyof T;
   ignoreCase?: (keyof T)[];
   ignoreCharacterSet?: (keyof T)[];
   matching?: (keyof T)[];
-  returning?: (keyof T)[] | ["*"];
+  returning?: (keyof T)[] | ['*'];
 }
 
 interface GenerateQueryResponse {
@@ -25,7 +25,7 @@ interface ToQueryProps {
   key: string;
   originalCase?: boolean;
   originalCharacterSet?: boolean;
-  type: "upsert" | "update";
+  type: 'upsert' | 'update';
 }
 
 export class FirebirdGenerateQuery<K extends string> {
@@ -34,38 +34,38 @@ export class FirebirdGenerateQuery<K extends string> {
   private formatDateTime(value: Date, type: number) {
     let parsedValue: string | Date = value;
 
-    const formatter = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+    const formatter = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     });
 
     const parts = formatter.formatToParts(value);
-    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
 
     // 12 = Date
     if (type === 12) {
-      parsedValue = `${get("year")}-${get("month")}-${get("day")}`;
+      parsedValue = `${get('year')}-${get('month')}-${get('day')}`;
     }
 
     // 13 = Time
     if (type === 13) {
-      parsedValue = `${get("hour")}:${get("minute")}:${get("second")}`;
+      parsedValue = `${get('hour')}:${get('minute')}:${get('second')}`;
     }
 
     // 35 = Timestamp
     if (type === 35) {
       parsedValue = new Date(
-        `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`,
+        `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`,
       );
     }
 
-    return parsedValue || "";
+    return parsedValue || '';
   }
 
   private async toQuery({ value, table, key, originalCase, originalCharacterSet, type }: ToQueryProps) {
@@ -74,9 +74,9 @@ export class FirebirdGenerateQuery<K extends string> {
       from rdb$relation_fields rf
       inner join rdb$fields f on rf.rdb$field_source = f.rdb$field_name
       where
-        upper(rf.rdb$relation_name) = ${escape(table.toUpperCase())}
+        upper(rf.rdb$relation_name) = ${this.firebird.escape(table.toUpperCase())}
         and
-        upper(rf.rdb$field_name) = ${escape(key.toUpperCase())}
+        upper(rf.rdb$field_name) = ${this.firebird.escape(key.toUpperCase())}
     `;
 
     const [fields, error] = await executePromise(this.firebird.execute<{ flength: number; ftype: number }>(query));
@@ -86,13 +86,13 @@ export class FirebirdGenerateQuery<K extends string> {
     }
 
     if (!fields || !fields.length) {
-      return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
+      return type === 'upsert' ? this.firebird.escape(value) : `${key} = ${this.firebird.escape(value)}`;
     }
 
     const [{ flength, ftype }] = fields;
 
-    if (typeof value === "string") {
-      value = value.replace(/\\/g, "/");
+    if (typeof value === 'string') {
+      value = value.replace(/\\/g, '/');
 
       // 12 - Date | 13 - Time | 35 - Timestamp | 261 - Blob
       if (![12, 13, 35, 261].includes(ftype)) {
@@ -103,17 +103,17 @@ export class FirebirdGenerateQuery<K extends string> {
         }
       }
 
-      if (type === "upsert") {
+      if (type === 'upsert') {
         if (originalCharacterSet) {
-          value = `cast(${escape(value)} as varchar(${value.length || 1}))`;
+          value = `cast(${this.firebird.escape(value)} as varchar(${value.length || 1}))`;
         } else {
-          value = `cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+          value = `cast(${this.firebird.escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
         }
       } else {
         if (originalCharacterSet) {
-          value = `${key} = cast(${escape(value)} as varchar(${value.length || 1}))`;
+          value = `${key} = cast(${this.firebird.escape(value)} as varchar(${value.length || 1}))`;
         } else {
-          value = `${key} = cast(${escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
+          value = `${key} = cast(${this.firebird.escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
         }
       }
 
@@ -124,7 +124,7 @@ export class FirebirdGenerateQuery<K extends string> {
       value = this.formatDateTime(value, ftype);
     }
 
-    return type === "upsert" ? escape(value) : `${key} = ${escape(value)}`;
+    return type === 'upsert' ? this.firebird.escape(value) : `${key} = ${this.firebird.escape(value)}`;
   }
 
   /**
@@ -140,7 +140,7 @@ export class FirebirdGenerateQuery<K extends string> {
    * @returns {Promise<GenerateQueryResponse>} Generated query parts
    */
   async execute<T>({
-    type = "upsert",
+    type = 'upsert',
     table,
     data,
     primaryKey,
@@ -186,25 +186,25 @@ export class FirebirdGenerateQuery<K extends string> {
       values.push(value);
     }
 
-    let query = "";
-    const columnsStr = columns.join(",\n\t\t");
-    const valuesStr = values.join(",\n\t\t");
+    let query = '';
+    const columnsStr = columns.join(',\n\t\t');
+    const valuesStr = values.join(',\n\t\t');
 
-    if (type === "upsert") {
+    if (type === 'upsert') {
       query = `
         update or insert into ${table} (
         \t\t${columnsStr}
         ) values (
         \t\t${valuesStr}
-        ) matching (${String(matching?.join(", ") ?? primaryKey)}) returning ${returning.join(", ")}
+        ) matching (${String(matching?.join(', ') ?? primaryKey)}) returning ${returning.join(', ')}
       `;
     }
 
-    if (type === "update") {
+    if (type === 'update') {
       query = `
         update ${table} set
           ${valuesStr}
-        where ${String(primaryKey)} = ${escape(data[primaryKey as keyof typeof data])}
+        where ${String(primaryKey)} = ${this.firebird.escape(data[primaryKey as keyof typeof data])}
       `;
     }
 
