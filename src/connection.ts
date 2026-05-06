@@ -1,5 +1,6 @@
 import { executePromise } from '@senhainfo/shared-utils';
 import Firebird from 'node-firebird';
+import { getPLimit } from './internal/get-plimit';
 
 interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
   host: string;
