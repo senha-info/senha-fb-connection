@@ -1,6 +1,6 @@
 import { executePromise } from '@senhainfo/shared-utils';
 import Firebird from 'node-firebird';
-import { getPLimit } from './internal/get-plimit';
+import pLimit from 'p-limit';
 
 interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
   host: string;
@@ -37,14 +37,14 @@ export class FirebirdConnection {
     pageSize: 4096,
   };
 
-  private concurrencyLimit = 20;
+  private limit = pLimit(20);
 
   /**
    * @param {FirebirdOptions} options The options to be used in the connection
    */
   constructor(options: FirebirdOptions) {
     if (options.concurrency) {
-      this.concurrencyLimit = options.concurrency;
+      this.limit.concurrency = options.concurrency;
     }
 
     delete options.concurrency;
@@ -70,11 +70,7 @@ export class FirebirdConnection {
    * console.log(result); // Prints the result of the query
    */
   public async execute<T>(query: string, params: (string | number)[] = []): Promise<T[]> {
-    const pLimit = await getPLimit();
-
-    const limit = pLimit(this.concurrencyLimit);
-
-    return limit(() => {
+    return this.limit(() => {
       return new Promise((resolve, reject) => {
         Firebird.attach(this.options, (error, database) => {
           if (error) {

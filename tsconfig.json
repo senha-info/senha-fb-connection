@@ -1,13 +1,11 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "_version": "22.0.0",
-
   "compilerOptions": {
     "lib": ["ES6"],
-    "module": "CommonJS",
+    "module": "ESNext",
     "target": "ES6",
     "strict": true,
     "esModuleInterop": true,
+    "moduleResolution": "bundler",
     "rootDir": "./src",
     "outDir": "./lib",
     "declaration": true,
@@ -16,5 +14,5 @@
     "types": ["node"]
   },
   "include": ["src"],
-  "exclude": ["node_modules", "lib", "src/@types/partial-nullable.ts"]
+  "exclude": ["node_modules", "lib", "tsup.config.ts", "src/@types/partial-nullable.ts"]
 }
