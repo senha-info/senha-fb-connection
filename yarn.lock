@@ -585,11 +585,6 @@ axios@^1.8.4:
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
-big-integer@^1.6.51:
-  version "1.6.52"
-  resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.52.tgz#60a887f3047614a8e1bffe5d7173490a97dc8c85"
-  integrity sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==
-
 bundle-require@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/bundle-require/-/bundle-require-5.1.0.tgz#8db66f41950da3d77af1ef3322f4c3e04009faee"
@@ -1027,11 +1022,6 @@ load-tsconfig@^0.2.3:
   resolved "https://registry.yarnpkg.com/load-tsconfig/-/load-tsconfig-0.2.5.tgz#453b8cd8961bfb912dea77eb6c168fe8cca3d3a1"
   integrity sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==
 
-long@^5.2.3:
-  version "5.3.1"
-  resolved "https://registry.yarnpkg.com/long/-/long-5.3.1.tgz#9d4222d3213f38a5ec809674834e0f0ab21abe96"
-  integrity sha512-ka87Jz3gcx/I7Hal94xaN2tZEOPoUOEVftkQqZx2EeQRN7LGdfLlI3FvZ+7WDplm+vK2Urx9ULrvSowtdCieng==
-
 magic-string@^0.30.17:
   version "0.30.21"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.30.21.tgz#56763ec09a0fa8091df27879fd94d19078c00d91"
@@ -1080,13 +1070,10 @@ mz@^2.7.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-node-firebird@^1.1.9:
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/node-firebird/-/node-firebird-1.1.9.tgz#0e6815b4e209812a4c85b71227e40e268bedeb8b"
-  integrity sha512-6Ol+Koide1WbfUp4BJ1dSA4wm091jAgCwwSoihxO/RRdcfR+dMVDE9jd2Z2ixjk7q/vSNJUYORXv7jmRfvwdrw==
-  dependencies:
-    big-integer "^1.6.51"
-    long "^5.2.3"
+node-firebird@^2.14.3:
+  version "2.14.3"
+  resolved "https://registry.yarnpkg.com/node-firebird/-/node-firebird-2.14.3.tgz#b5b23f3cb798485f175ec206cfe3f691d88de304"
+  integrity sha512-HssHZNb/klA0u4vEatuIR901y8C/zUZ828IdSbufeJ11JrrOu/kwAJawomXr+S1kmH2IGNqvmbLaMSJPkx3YqA==
 
 node-windows@^1.0.0-beta.8:
   version "1.0.0-beta.8"

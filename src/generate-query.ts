@@ -204,7 +204,8 @@ export class FirebirdGenerateQuery<K extends string> {
       query = `
         update ${table} set
           ${valuesStr}
-        where ${String(primaryKey)} = ${this.firebird.escape(data[primaryKey as keyof typeof data])}
+        where
+          ${String(primaryKey)} = ${this.firebird.escape(data[primaryKey as keyof typeof data])}
       `;
     }
 

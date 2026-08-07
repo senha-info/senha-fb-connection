@@ -2,7 +2,7 @@
   "name": "@senhainfo/fb-connection",
   "version": "1.4.1",
   "repository": "https://github.com/senha-info/senha-fb-connection.git",
-  "author": "Bruno Gaspar <bruninhoogaspar@gmail.com>",
+  "author": "Bruno Gaspar <dev.brunogaspar@gmail.com>",
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@senhainfo/shared-utils": "^1.5.22",
-    "node-firebird": "^1.1.9",
+    "node-firebird": "^2.14.3",
     "p-limit": "^7.3.0"
   }
 }

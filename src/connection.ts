@@ -1,5 +1,5 @@
 import { executePromise } from '@senhainfo/shared-utils';
-import Firebird from 'node-firebird';
+import * as Firebird from 'node-firebird';
 import pLimit from 'p-limit';
 
 interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
