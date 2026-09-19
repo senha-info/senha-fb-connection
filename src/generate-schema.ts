@@ -127,7 +127,7 @@ export class FirebirdGenerateSchema {
 
       fs.appendFileSync(schemasPath, schemas.join('\n'));
 
-      fs.appendFileSync(schemasPath, '\nconst tables = {\n');
+      fs.appendFileSync(schemasPath, '\nexport const tables = {\n');
       fs.appendFileSync(schemasPath, `  ${tables.join('\n  ')}`);
       fs.appendFileSync(schemasPath, '\n} as const;\n');
       fs.appendFileSync(schemasPath, '\nexport type Tables = keyof typeof tables;');
