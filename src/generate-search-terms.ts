@@ -6,7 +6,7 @@ interface ParseAttributeProps {
 }
 
 interface GetSearchTermsRequest<T> {
-  search: string | undefined;
+  search?: string;
   primaryKey: keyof T;
   attributes: (keyof T)[];
 }
