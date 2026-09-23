@@ -13,7 +13,7 @@ function formatUtcTimestamp(date: Date): string {
 function serialize(value: unknown): string {
   if (value instanceof Date) return formatUtcTimestamp(value);
   if (typeof value === 'boolean') return value ? '1' : '0';
-  return escape(String(value))
+  return String(value);
 }
 
 export function buildWhere(params: WhereParams[]) {

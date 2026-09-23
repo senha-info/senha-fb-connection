@@ -3,12 +3,6 @@ import * as Firebird from 'node-firebird';
 import pLimit from 'p-limit';
 
 interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-
   /**
    * @default true
    */
@@ -28,6 +22,11 @@ interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
    * @default 20
    */
   concurrency?: number;
+
+  /**
+   * @default WIN1252
+   */
+  encoding?: Firebird.SupportedCharacterSet;
 }
 
 export class FirebirdConnection {
@@ -35,6 +34,7 @@ export class FirebirdConnection {
     blobAsText: true,
     lowercase_keys: true,
     pageSize: 4096,
+    encoding: 'WIN1252'
   };
 
   private limit = pLimit(20);

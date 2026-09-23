@@ -7,7 +7,7 @@ interface ParseAttributeProps {
 
 interface GetSearchTermsRequest<T> {
   search?: string;
-  primaryKey: keyof T;
+  primaryKey?: keyof T;
   attributes: (keyof T)[];
 }
 
@@ -24,7 +24,7 @@ export class GenerateSearchTerms {
    * @returns {Promise<string>}
    */
   async execute<T>({ search, primaryKey, attributes }: GetSearchTermsRequest<T>): Promise<string> {
-    if (!search || !primaryKey) {
+    if (!search) {
       return '';
     }
 
@@ -34,8 +34,7 @@ export class GenerateSearchTerms {
     let searchTerms = '';
 
     for await (const attribute of attributes) {
-      const parsedAttribute = await this.parseAttribute({ key: attribute as string });
-      searchAttributes.push(`coalesce(${parsedAttribute}, '')`);
+      searchAttributes.push(`coalesce(${attribute as string}, '')`);
     }
 
     const searchAttributesText = searchAttributes.join("\n\t|| ' ' ||\n\t");
@@ -48,50 +47,12 @@ export class GenerateSearchTerms {
       }
     });
 
-    return `upper(${primaryKey as string}) = upper(${this.firebird.escape(search)}) or (${searchTerms})`;
-  }
+    let text = `(${searchTerms})`;
 
-  private async parseAttribute({ key }: ParseAttributeProps) {
-    const query = `
-      select first 1
-        f.rdb$field_type ftype,
-        trim(rf.rdb$field_source) fsource,
-        trim(coalesce(c.rdb$collation_name, 'NONE')) cname
-      from rdb$relation_fields rf
-      inner join rdb$fields f on rf.rdb$field_source = f.rdb$field_name
-      left join rdb$collations c on (
-          c.rdb$collation_id = f.rdb$collation_id
-          and
-          c.rdb$character_set_id = f.rdb$character_set_id
-      )
-      where upper(rf.rdb$field_name) = upper(${this.firebird.escape(key)})
-    `;
-
-    const [fields, error] = await executePromise(
-      this.firebird.execute<{ ftype: number; fsource: string; cname?: string }>(query),
-    );
-
-    if (error) {
-      throw new Error(error);
+    if (primaryKey) {
+      text = ` and upper(${primaryKey as string}) = upper(${this.firebird.escape(search)})`;
     }
 
-    const [{ ftype, fsource, cname }] = fields;
-
-    // 37 - Varchar
-    if (ftype === 37 && cname === 'NONE') {
-      return `cast(${key} as VARCHAR(120) character set WIN1252)`;
-    }
-
-    // 37 - Varchar
-    if (ftype === 37 && !fsource.startsWith('VARCHAR')) {
-      return `cast(${key} as VARCHAR(500) character set WIN1252)`;
-    }
-
-    // 261 - Blob
-    if (ftype === 261) {
-      return `cast(${key} as VARCHAR5000)`;
-    }
-
-    return key;
+    return `(${text})`;
   }
 }
