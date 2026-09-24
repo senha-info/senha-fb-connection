@@ -36,8 +36,13 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@eslint/js": "^10.0.1",
     "@senhainfo/shared-utils": "^1.5.22",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "node-firebird": "^2.14.3",
-    "p-limit": "^7.3.0"
+    "p-limit": "^7.3.0",
+    "typescript-eslint": "^8.70.1"
   }
 }

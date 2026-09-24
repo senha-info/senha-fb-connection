@@ -1,9 +1,4 @@
-import { executePromise } from '@senhainfo/shared-utils';
 import { FirebirdConnection } from './connection';
-
-interface ParseAttributeProps {
-  key: string;
-}
 
 interface GetSearchTermsRequest<T> {
   search?: string;

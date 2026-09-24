@@ -8,7 +8,6 @@ interface GenerateQueryRequest<T, K extends string> {
   data: PartialNullable<T>;
   primaryKey: keyof T;
   ignoreCase?: (keyof T)[];
-  ignoreCharacterSet?: (keyof T)[];
   matching?: (keyof T)[];
   returning?: (keyof T)[] | ['*'];
 }
@@ -26,10 +25,8 @@ interface FieldMetadata {
 
 interface ToQueryProps {
   value: string | number | Date;
-  table: string;
   key: string;
   originalCase?: boolean;
-  originalCharacterSet?: boolean;
   type: 'upsert' | 'update';
   fieldMetadata?: FieldMetadata;
 }
@@ -123,7 +120,7 @@ export class FirebirdGenerateQuery<K extends string> {
     return parsedValue || '';
   }
 
-  private async toQuery({ value, table, key, originalCase, originalCharacterSet, type, fieldMetadata }: ToQueryProps) {
+  private async toQuery({ value, key, originalCase, type, fieldMetadata }: ToQueryProps) {
     if (!fieldMetadata) {
       return type === 'upsert' ? this.firebird.escape(value) : `${key} = ${this.firebird.escape(value)}`;
     }
@@ -133,47 +130,38 @@ export class FirebirdGenerateQuery<K extends string> {
     if (typeof value === 'string') {
       value = value.replace(/\\/g, '/');
 
-      // 12 - Date | 13 - Time | 35 - Timestamp | 261 - Blob
-      if (![12, 13, 35, 261].includes(ftype)) {
+      // 261 - Blob
+      if (ftype !== 261) {
         if (originalCase) {
           value = value.trim().slice(0, flength);
         } else {
           value = value.toUpperCase().trim().slice(0, flength);
         }
       }
-
-      if (type === 'upsert') {
-        if (originalCharacterSet) {
-          value = `cast(${this.firebird.escape(value)} as varchar(${value.length || 1}))`;
-        } else {
-          value = `cast(${this.firebird.escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
-        }
-      } else {
-        if (originalCharacterSet) {
-          value = `${key} = cast(${this.firebird.escape(value)} as varchar(${value.length || 1}))`;
-        } else {
-          value = `${key} = cast(${this.firebird.escape(value)} as varchar(${value.length || 1}) character set WIN1252)`;
-        }
-      }
-
-      return value;
     }
 
     if (value instanceof Date) {
       value = this.formatDateTime(value, ftype);
     }
 
-    return type === 'upsert' ? this.firebird.escape(value) : `${key} = ${this.firebird.escape(value)}`;
+    value = this.firebird.escape(value);
+
+    if (type === 'update') {
+      value = `${key} = ${value}`;
+    }
+
+    return value;
   }
 
   /**
    * Generate Firebird query
    *
    * @param {GenerateQueryRequest<T>} request Request object
+   * @param {string} request.type Query type (upsert | update)
    * @param {string} request.table Table name
    * @param {PartialNullable<T>} request.data Data to be inserted or updated
    * @param {keyof T} request.primaryKey Primary key of the table
-   * @param {keyof T[]} [request.ignoreCasing] Columns to ignore casing
+   * @param {keyof T[]} [request.ignoreCase] Columns to ignore case
    * @param {keyof T[]} [request.matching] Columns to match
    * @param {keyof T[]} [request.returning] Columns to return
    * @returns {Promise<GenerateQueryResponse>} Generated query parts
@@ -184,7 +172,6 @@ export class FirebirdGenerateQuery<K extends string> {
     data,
     primaryKey,
     ignoreCase = [],
-    ignoreCharacterSet = [],
     matching,
     returning = [primaryKey],
   }: GenerateQueryRequest<T, K>): Promise<GenerateQueryResponse> {
@@ -212,15 +199,12 @@ export class FirebirdGenerateQuery<K extends string> {
       const key = keys[i];
 
       const originalCase = ignoreCase.includes(key as keyof typeof data);
-      const originalCharacterSet = ignoreCharacterSet.includes(key as keyof typeof data);
       const fieldMetadata = tableMetadata.get(key.toUpperCase());
 
       const value = await this.toQuery({
-        value: data[key as keyof typeof data] as string | number,
-        table,
+        value: data[key as keyof typeof data] as string | number | Date,
         key,
         originalCase,
-        originalCharacterSet,
         type,
         fieldMetadata,
       });
