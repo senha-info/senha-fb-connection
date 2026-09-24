@@ -45,7 +45,7 @@ export class GenerateSearchTerms {
     let text = `(${searchTerms})`;
 
     if (primaryKey) {
-      text = ` and upper(${primaryKey as string}) = upper(${this.firebird.escape(search)})`;
+      text += ` and upper(${primaryKey as string}) = upper(${this.firebird.escape(search)})`;
     }
 
     return `(${text})`;

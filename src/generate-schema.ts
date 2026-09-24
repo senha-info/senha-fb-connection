@@ -54,88 +54,84 @@ export class FirebirdGenerateSchema {
    * @returns {Promise<void>}
    */
   async execute(): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
+    const query = `
+      select trim(rdb$relation_name) as rname
+      from rdb$relations
+      where rdb$system_flag = 0
+      order by rdb$relation_name
+    `;
+
+    const [result, error] = await executePromise(this.firebird.execute<Relation>(query));
+
+    if (error) {
+      console.error(`\n✕ An error occurred while generating Firebird schema ${error}\n`);
+      throw error;
+    }
+
+    const schemas = [];
+    const tables = [];
+
+    for (const { rname } of result) {
       const query = `
-        select trim(rdb$relation_name) as rname
-        from rdb$relations
-        where rdb$system_flag = 0
-        order by rdb$relation_name
+        select trim(rf.rdb$field_name) as fname, f.rdb$field_type as ftype
+        from rdb$relation_fields rf
+        join rdb$fields f on f.rdb$field_name = rf.rdb$field_source
+        where rf.rdb$relation_name = ?
+        order by rf.rdb$field_position
       `;
 
-      const [result, error] = await executePromise(this.firebird.execute<Relation>(query));
+      const [relationFields, error] = await executePromise(this.firebird.execute<RelationField>(query, [rname]));
 
       if (error) {
         console.error(`\n✕ An error occurred while generating Firebird schema ${error}\n`);
-        return reject(error);
+        throw error;
       }
 
-      const schemas = [];
-      const tables = [];
+      const fields = [];
 
-      for (const { rname } of result) {
-        const query = `
-          select trim(rf.rdb$field_name) as fname, f.rdb$field_type as ftype
-          from rdb$relation_fields rf
-          join rdb$fields f on f.rdb$field_name = rf.rdb$field_source
-          where rf.rdb$relation_name = ?
-          order by rf.rdb$field_position
-        `;
-
-        const [relationFields, error] = await executePromise(this.firebird.execute<RelationField>(query, [rname]));
-
-        if (error) {
-          console.error(`\n✕ An error occurred while generating Firebird schema ${error}\n`);
-          return reject(error);
-        }
-
-        const fields = [];
-
-        for (const { fname, ftype } of relationFields) {
-          fields.push({
-            name: fname,
-            type: this.getFieldType(ftype),
-          });
-        }
-
-        const formatCase = new FormatCase();
-        const interfaceName = formatCase.toPascalCase(rname);
-        const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join('\n  ');
-        const content = `/**\n * Tabela: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
-
-        schemas.push(content);
-
-        const table = `${rname.toLowerCase()}: {} as ${interfaceName},`;
-
-        tables.push(table);
-      }
-
-      const destination = this.options.destinationFolder;
-
-      if (!fs.existsSync(destination)) {
-        fs.mkdirSync(destination, {
-          recursive: true,
+      for (const { fname, ftype } of relationFields) {
+        fields.push({
+          name: fname,
+          type: this.getFieldType(ftype),
         });
       }
 
-      const schemasPath = path.join(destination, this.options.fileName);
+      const formatCase = new FormatCase();
+      const interfaceName = formatCase.toPascalCase(rname);
+      const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join('\n  ');
+      const content = `/**\n * Tabela: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
 
-      if (fs.existsSync(schemasPath)) {
-        fs.unlinkSync(schemasPath);
-      }
+      schemas.push(content);
 
-      fs.appendFileSync(schemasPath, '/* Auto generated, do not edit */\n');
+      const table = `${rname.toLowerCase()}: {} as ${interfaceName},`;
 
-      fs.appendFileSync(schemasPath, schemas.join('\n'));
+      tables.push(table);
+    }
 
-      fs.appendFileSync(schemasPath, '\nexport const tables = {\n');
-      fs.appendFileSync(schemasPath, `  ${tables.join('\n  ')}`);
-      fs.appendFileSync(schemasPath, '\n} as const;\n');
-      fs.appendFileSync(schemasPath, '\nexport type Tables = keyof typeof tables;');
+    const destination = this.options.destinationFolder;
 
-      console.info('\n✓ Firebird schema generated successfully\n');
+    if (!fs.existsSync(destination)) {
+      fs.mkdirSync(destination, {
+        recursive: true,
+      });
+    }
 
-      return resolve();
-    });
+    const schemasPath = path.join(destination, this.options.fileName);
+
+    if (fs.existsSync(schemasPath)) {
+      fs.unlinkSync(schemasPath);
+    }
+
+    fs.appendFileSync(schemasPath, '/* Auto generated, do not edit */\n');
+
+    fs.appendFileSync(schemasPath, schemas.join('\n'));
+
+    fs.appendFileSync(schemasPath, '\nexport const tables = {\n');
+    fs.appendFileSync(schemasPath, `  ${tables.join('\n  ')}`);
+    fs.appendFileSync(schemasPath, '\n} as const;\n');
+    fs.appendFileSync(schemasPath, '\nexport type Tables = keyof typeof tables;');
+
+    console.info('\n✓ Firebird schema generated successfully\n');
   }
 
   private getFieldType(fieldType: number): string {

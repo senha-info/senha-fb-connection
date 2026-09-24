@@ -4,6 +4,7 @@
   "repository": "https://github.com/senha-info/senha-fb-connection.git",
   "author": "Bruno Gaspar <dev.brunogaspar@gmail.com>",
   "license": "MIT",
+  "type": "module",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
@@ -18,6 +19,9 @@
   ],
   "scripts": {
     "types:check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
     "clean": "rmdir /s /q lib",
     "build": "tsup",
     "prepare": "npm run build",

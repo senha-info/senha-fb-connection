@@ -143,8 +143,10 @@ export class FirebirdConnectionOld {
       throw error;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async function commit(): Promise<any[]> {
       return new Promise((resolve, reject) => {
         transaction.commit((error) => {

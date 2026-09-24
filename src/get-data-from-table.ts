@@ -10,6 +10,7 @@ interface GetDataFromTableRequest {
 }
 
 type GenericResponse = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 };
 
@@ -43,6 +44,7 @@ export class GetDataFromTable {
       ${orderBy && orderBy.length ? `order by ${orderBy.join(',')}` : ''}
     `;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [rows, error] = await executePromise(this.firebird.execute<any>(query));
 
     if (error) {

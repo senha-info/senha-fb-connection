@@ -1,5 +1,3 @@
-import { escape } from 'node-firebird';
-
 interface WhereParams {
   value: unknown;
   condition: boolean;

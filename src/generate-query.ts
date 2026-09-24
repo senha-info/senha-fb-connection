@@ -181,7 +181,7 @@ export class FirebirdGenerateQuery<K extends string> {
       }
     }
 
-    if (!data.hasOwnProperty(primaryKey)) {
+    if (!Object.prototype.hasOwnProperty.call(data, primaryKey)) {
       data[primaryKey as keyof typeof data] = null;
     }
 
