@@ -590,10 +590,10 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.60.3.tgz#cc6f094a3ffe5556bb4a831ee6fb572b8cd81a75"
   integrity sha512-hPt/bgL5cE+Qp+/TPHBqptcAgPzgj46mPcg/16zNUmbQk0j+mOEQV/+Lqu8QRtDV3Ek95Q6FeFITpuhl6OTsAA==
 
-"@senhainfo/shared-utils@^1.5.22":
-  version "1.5.22"
-  resolved "https://registry.yarnpkg.com/@senhainfo/shared-utils/-/shared-utils-1.5.22.tgz#1ae1f0000ab1aa61e9ff6b4429c5a47798d309f0"
-  integrity sha512-ySI4+RMNOUZ0wJosPrKKxIAmimy/N8j4WA0xKv4WbOGlctBnfbLn9jaNB3frIJQUZadovSboSfYfnkAH8dHM/g==
+"@senhainfo/shared-utils@^1.6.8":
+  version "1.6.8"
+  resolved "https://registry.yarnpkg.com/@senhainfo/shared-utils/-/shared-utils-1.6.8.tgz#37545fc9078da28de1a527a310de0441d01ea90c"
+  integrity sha512-yR2asufsB8mP7qnzwkPOaMuMOIFVnyjshr5AkCIZKwA+kbGsKLO1M7P8qzoCOwvHnOytZN+DlVpoOE0/VhPGbw==
   dependencies:
     "@fastify/multipart" "^9.0.3"
     "@types/node-windows" "^0.1.6"
@@ -1083,11 +1083,6 @@ eslint-config-prettier@^10.1.8:
   version "10.1.8"
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-10.1.8.tgz#15734ce4af8c2778cc32f0b01b37b0b5cd1ecb97"
   integrity sha512-82GZUjRS0p/jganf6q1rEO25VSoHH0hKPCTrgillPjdI/3bgBhAE1QzHrHTizjpRvy6pGAvKjDJtk2pF9NDq8w==
-
-eslint-plugin-unused-imports@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-unused-imports/-/eslint-plugin-unused-imports-4.4.1.tgz#a831f0a2937d7631eba30cb87091ab7d3a5da0e1"
-  integrity sha512-oZGYUz1X3sRMGUB+0cZyK2VcvRX5lm/vB56PgNNcU+7ficUCKm66oZWKUubXWnOuPjQ8PvmXtCViXBMONPe7tQ==
 
 eslint-scope@^9.1.2:
   version "9.1.2"
@@ -1591,10 +1586,10 @@ natural-compare@^1.4.0:
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
   integrity sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==
 
-node-firebird@^2.14.3:
-  version "2.14.3"
-  resolved "https://registry.yarnpkg.com/node-firebird/-/node-firebird-2.14.3.tgz#b5b23f3cb798485f175ec206cfe3f691d88de304"
-  integrity sha512-HssHZNb/klA0u4vEatuIR901y8C/zUZ828IdSbufeJ11JrrOu/kwAJawomXr+S1kmH2IGNqvmbLaMSJPkx3YqA==
+node-firebird@^2.18.2:
+  version "2.18.2"
+  resolved "https://registry.yarnpkg.com/node-firebird/-/node-firebird-2.18.2.tgz#6163ce4555db2d56f4f69f22334d2df6a5acc876"
+  integrity sha512-0z2xEwFZcPNLJQ4Mp0jXZ0V1cxKaSnrAPemj8LsuKM5KJ716hrIijB7QtjA1CbbRif+CWahwd8I5KmZU43OGFQ==
 
 node-windows@^1.0.0-beta.8:
   version "1.0.0-beta.8"

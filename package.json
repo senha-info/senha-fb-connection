@@ -9,9 +9,21 @@
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
+      "types": "./lib/index.d.ts",
       "import": "./lib/index.mjs",
       "require": "./lib/index.js"
-    }
+    },
+    "./v1": {
+      "types": "./lib/v1/index.d.ts",
+      "import": "./lib/v1/index.mjs",
+      "require": "./lib/v1/index.js"
+    },
+    "./v2": {
+      "types": "./lib/v2/index.d.ts",
+      "import": "./lib/v2/index.mjs",
+      "require": "./lib/v2/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "lib"
@@ -20,14 +32,9 @@
     "types:check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "clean": "rmdir /s /q lib",
+    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
     "build": "tsup",
-    "prepare": "npm run build",
-    "commit:patch": "npm version patch --no-git-tag-version",
-    "commit:minor": "npm version minor --no-git-tag-version",
-    "commit:major": "npm version major --no-git-tag-version",
-    "postversion": "git add package.json && git commit -m v%npm_package_version%"
+    "prepare": "npm run build"
   },
   "publishConfig": {
     "access": "public"
@@ -37,15 +44,14 @@
     "@types/node": "^22.14.0",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-unused-imports": "^4.4.1",
     "tsup": "^8.5.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.70.1"
   },
   "dependencies": {
-    "@senhainfo/shared-utils": "^1.5.22",
-    "node-firebird": "^2.14.3",
+    "@senhainfo/shared-utils": "^1.6.8",
+    "node-firebird": "^2.18.2",
     "p-limit": "^7.3.0"
   }
 }

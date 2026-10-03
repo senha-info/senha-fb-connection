@@ -37,15 +37,13 @@ export class FirebirdConnection {
     encoding: 'WIN1252'
   };
 
-  private limit = pLimit(20);
+  private limit: ReturnType<typeof pLimit>;
 
   /**
    * @param {FirebirdOptions} options The options to be used in the connection
    */
   constructor(options: FirebirdOptions) {
-    if (options.concurrency) {
-      this.limit.concurrency = options.concurrency;
-    }
+    this.limit = pLimit(options.concurrency ?? 20);
 
     delete options.concurrency;
 
