@@ -36,7 +36,7 @@ function pad(n: number): string {
 }
 
 /**
- * Extrai partes de data no horário local da máquina
+ * Extracts date parts in the local machine timezone.
  */
 function getLocalDateParts(date: Date): DateTimeParts {
   return {
@@ -50,7 +50,7 @@ function getLocalDateParts(date: Date): DateTimeParts {
 }
 
 /**
- * Extrai partes de data convertendo para um timeZone específico
+ * Extracts date parts converted to a specific timezone.
  */
 function getTimeZoneParts(date: Date, timeZone: string): DateTimeParts {
   const formatter = getDateTimeFormatter(timeZone);
@@ -71,12 +71,19 @@ function getTimeZoneParts(date: Date, timeZone: string): DateTimeParts {
   };
 }
 
+/**
+ * Resolves date parts using either a specified timezone or local machine time.
+ */
 function getDateTimeParts(date: Date, timeZone?: string): DateTimeParts {
   return timeZone ? getTimeZoneParts(date, timeZone) : getLocalDateParts(date);
 }
 
 /**
- * Formata um objeto Date para formato TIMESTAMP compatível com Firebird: 'YYYY-MM-DD HH:mm:ss'
+ * Formats a Date object into a Firebird-compatible TIMESTAMP string: 'YYYY-MM-DD HH:mm:ss'.
+ *
+ * @param date Date object to format.
+ * @param timeZone Optional IANA timezone identifier (e.g. 'America/Sao_Paulo').
+ * @returns Formatted timestamp string.
  */
 export function formatTimestamp(date: Date, timeZone?: string): string {
   const p = getDateTimeParts(date, timeZone);
@@ -84,7 +91,11 @@ export function formatTimestamp(date: Date, timeZone?: string): string {
 }
 
 /**
- * Formata um objeto Date para formato DATE compatível com Firebird: 'YYYY-MM-DD'
+ * Formats a Date object into a Firebird-compatible DATE string: 'YYYY-MM-DD'.
+ *
+ * @param date Date object to format.
+ * @param timeZone Optional IANA timezone identifier (e.g. 'America/Sao_Paulo').
+ * @returns Formatted date string.
  */
 export function formatDate(date: Date, timeZone?: string): string {
   const p = getDateTimeParts(date, timeZone);
@@ -92,7 +103,11 @@ export function formatDate(date: Date, timeZone?: string): string {
 }
 
 /**
- * Formata um objeto Date para formato TIME compatível com Firebird: 'HH:mm:ss'
+ * Formats a Date object into a Firebird-compatible TIME string: 'HH:mm:ss'.
+ *
+ * @param date Date object to format.
+ * @param timeZone Optional IANA timezone identifier (e.g. 'America/Sao_Paulo').
+ * @returns Formatted time string.
  */
 export function formatTime(date: Date, timeZone?: string): string {
   const p = getDateTimeParts(date, timeZone);
@@ -100,7 +115,12 @@ export function formatTime(date: Date, timeZone?: string): string {
 }
 
 /**
- * Formata um Date baseado no tipo de coluna Firebird (12: Date, 13: Time, 35/outro: Timestamp)
+ * Formats a Date based on the Firebird column type (12 = DATE, 13 = TIME, 35/other = TIMESTAMP).
+ *
+ * @param date Date object to format.
+ * @param type Firebird field type code.
+ * @param timeZone Optional IANA timezone identifier.
+ * @returns Formatted date/time string.
  */
 export function formatDateTimeByType(date: Date, type?: number, timeZone?: string): string {
   if (type === 12) {

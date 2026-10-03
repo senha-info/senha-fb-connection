@@ -14,12 +14,22 @@ interface RelationField {
   ftype: number;
 }
 
+/**
+ * Inspects the Firebird database catalog and automatically generates TypeScript interface definitions
+ * and table mapping constants for all user tables.
+ */
 export class GenerateSchema {
   private options: Required<GenerateSchemaOptions> = {
     destinationFolder: path.join('src', 'schemas'),
     fileName: 'fb-schema.ts',
   };
 
+  /**
+   * Creates a new GenerateSchema instance.
+   *
+   * @param firebird Active FirebirdConnection instance.
+   * @param options Optional output folder and filename configuration.
+   */
   constructor(
     private firebird: FirebirdConnection,
     options?: GenerateSchemaOptions,
@@ -30,7 +40,7 @@ export class GenerateSchema {
   }
 
   /**
-   * Conecta ao banco de dados e gera as interfaces TypeScript correspondentes às tabelas
+   * Connects to the database and generates TypeScript interfaces and table constants for all user tables.
    */
   async execute(): Promise<void> {
     const query = `
@@ -79,7 +89,7 @@ export class GenerateSchema {
         const formatCase = new FormatCase();
         const interfaceName = formatCase.toPascalCase(rname);
         const fieldsMap = fields.map(({ name, type }) => `${name.toLowerCase()}: ${type};`).join('\n  ');
-        const content = `/**\n * Tabela: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
+        const content = `/**\n * Table: ${rname}\n */\nexport interface ${interfaceName} {\n  ${fieldsMap}\n}\n`;
 
         schemas.push(content);
 

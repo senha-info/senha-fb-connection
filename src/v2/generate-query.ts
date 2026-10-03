@@ -17,10 +17,19 @@ interface ToQueryProps {
 
 const TAB_SPACE = '\n  ';
 
-// Tipos de string no Firebird: 14 = CHAR, 37 = VARCHAR, 40 = CSTRING
+// Firebird string field types: 14 = CHAR, 37 = VARCHAR, 40 = CSTRING
 const STRING_FIELD_TYPES = new Set([14, 37, 40]);
 
+/**
+ * Utility class for generating dynamic SQL queries (upsert and update)
+ * with automatic table metadata reflection, field length trimming, and type formatting.
+ */
 export class GenerateQuery<K extends string = string> {
+  /**
+   * Creates a new GenerateQuery instance.
+   *
+   * @param firebird Active FirebirdConnection instance used for metadata reflection and escaping.
+   */
   constructor(private firebird: FirebirdConnection) {}
 
   private metadataCache = new Map<string, Map<string, FieldMetadata>>();
@@ -70,6 +79,11 @@ export class GenerateQuery<K extends string = string> {
     return metadata;
   }
 
+  /**
+   * Clears the cached table column metadata.
+   *
+   * @param table Optional table name. If omitted, clears cache for all tables.
+   */
   public clearMetadataCache(table?: string): void {
     if (table) {
       this.metadataCache.delete(table.toUpperCase());
@@ -107,7 +121,12 @@ export class GenerateQuery<K extends string = string> {
   }
 
   /**
-   * Gera consultas dinâmicas de upsert ou update com base nos metadados da tabela
+   * Generates dynamic upsert or update SQL statements based on table metadata.
+   * Automatically trims strings according to column length limits and formats dates.
+   *
+   * @template T Entity data model type.
+   * @param request Query generation options including table name, payload, and primary key.
+   * @returns Object containing the generated query and formatted columns/values snippets.
    */
   async execute<T>({
     type = 'upsert',
@@ -118,7 +137,7 @@ export class GenerateQuery<K extends string = string> {
     matching,
     returning = [primaryKey],
   }: GenerateQueryRequest<T, K>): Promise<GenerateQueryResponse> {
-    // Clona o objeto data para evitar mutações no objeto original do chamador
+    // Clone data object to prevent mutating caller's original object
     const payload = { ...data };
 
     for (const key of Object.keys(payload)) {
@@ -140,7 +159,7 @@ export class GenerateQuery<K extends string = string> {
         );
       }
 
-      // No UPDATE, a chave primária pertence à cláusula WHERE e não deve ser redundante no SET
+      // In UPDATE operations, primary key belongs in the WHERE clause and must not appear in the SET clause
       delete payload[primaryKey as keyof typeof payload];
     }
 

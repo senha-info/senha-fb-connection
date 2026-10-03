@@ -29,12 +29,16 @@ interface FirebirdOptions extends Omit<Firebird.Options, 'lowercase_keys'> {
   encoding?: Firebird.SupportedCharacterSet;
 }
 
+/**
+ * @deprecated The v1 `FirebirdConnection` is deprecated and will be removed in v3.0.0.
+ * Please migrate to the v2 `FirebirdConnection` from `@senhainfo/fb-connection`.
+ */
 export class FirebirdConnection {
   private options: Firebird.Options = {
     blobAsText: true,
     lowercase_keys: true,
     pageSize: 4096,
-    encoding: 'WIN1252'
+    encoding: 'WIN1252',
   };
 
   private limit: ReturnType<typeof pLimit>;

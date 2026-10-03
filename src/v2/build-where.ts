@@ -1,6 +1,9 @@
 import type { WhereParams } from './types.js';
 import { formatTimestamp } from './utils/date.js';
 
+/**
+ * Serializes a value into a SQL string representation.
+ */
 function serialize(value: unknown, timeZone?: string): string {
   if (value instanceof Date) return formatTimestamp(value, timeZone);
   if (typeof value === 'boolean') return value ? '1' : '0';
@@ -8,11 +11,11 @@ function serialize(value: unknown, timeZone?: string): string {
 }
 
 /**
- * Constrói dinamicamente uma cláusula WHERE baseada em condições ativas.
+ * Dynamically builds a SQL WHERE clause based on active conditions and non-null values.
  *
- * @param params Lista de parâmetros contendo valor, condição booleana e função construtora
- * @param timeZone Fuso horário opcional para conversão de datas (ex: 'America/Sao_Paulo', 'Europe/Lisbon')
- * @returns Cláusula WHERE formatada ou string vazia
+ * @param params List of parameter configurations containing value, boolean condition, and query builder function.
+ * @param timeZone Optional timezone identifier for date conversions (e.g. `'America/Sao_Paulo'`).
+ * @returns Formatted WHERE clause prefixed with `' where '` or an empty string if no conditions apply.
  */
 export function buildWhere(params: WhereParams[], timeZone?: string): string {
   const where = params

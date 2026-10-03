@@ -1,14 +1,24 @@
 import { FirebirdConnection } from './connection.js';
 import type { GetSearchTermsRequest } from './types.js';
 
+/**
+ * Utility class for generating multi-field text search SQL conditions.
+ */
 export class GenerateSearchTerms {
+  /**
+   * Creates a new GenerateSearchTerms instance.
+   *
+   * @param firebird Active FirebirdConnection instance.
+   */
   constructor(private firebird: FirebirdConnection) {}
 
   /**
-   * Gera cláusula SQL de busca textual multi-atributos
+   * Generates a SQL WHERE condition for multi-attribute text search across specified columns.
+   * Concatenates columns into a VARCHAR5000 cast and checks case-insensitive word matching.
    *
-   * @param request Parâmetros de pesquisa
-   * @returns String contendo as condições SQL de busca
+   * @template T Entity type containing the searched attributes.
+   * @param request Search request parameters including search terms, attributes, and optional primary key.
+   * @returns SQL search condition string or an empty string if no search terms provided.
    */
   public execute<T>({ search, primaryKey, attributes, minWordLength = 3 }: GetSearchTermsRequest<T>): string {
     if (!search || !search.trim()) {
@@ -17,8 +27,8 @@ export class GenerateSearchTerms {
 
     const words = search.trim().split(/\s+/);
 
-    // Filtra termos com tamanho menor que minWordLength (ex: "de", "da", "e"),
-    // a menos que todas as palavras digitadas sejam curtas
+    // Filter terms shorter than minWordLength (e.g. short prepositions),
+    // unless all words in the search query are short
     const filteredWords = words.filter((w) => w.length >= minWordLength);
     const wordsToSearch = filteredWords.length > 0 ? filteredWords : words;
 
@@ -39,4 +49,3 @@ export class GenerateSearchTerms {
     return `(${clause})`;
   }
 }
-

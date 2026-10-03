@@ -1,14 +1,22 @@
 import { FirebirdConnection } from './connection.js';
 import type { GetNextSequenceRequest, GetNextSequenceResponse } from './types.js';
 
+/**
+ * Utility class for retrieving the next value of a Firebird generator/sequence.
+ */
 export class GetNextSequence {
+  /**
+   * Creates a new GetNextSequence instance.
+   *
+   * @param firebird Active FirebirdConnection instance.
+   */
   constructor(private firebird: FirebirdConnection) {}
 
   /**
-   * Obtém o próximo valor sequencial de um gerador (generator) Firebird
+   * Retrieves the next sequential value from a Firebird generator/sequence using `GEN_ID(name, 1)`.
    *
-   * @param request Parâmetros contendo o nome do generator
-   * @returns Próximo número de sequência
+   * @param request Generator parameters containing generator name and naming convention flag.
+   * @returns Object containing the next sequence value.
    */
   async execute({ generator, isTableId = true }: GetNextSequenceRequest): Promise<GetNextSequenceResponse> {
     const rawName = isTableId ? `gen_${generator}_id` : `gen_${generator}`;

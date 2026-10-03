@@ -32,9 +32,10 @@
     "types:check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
     "build": "tsup",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "check": "npm run lint && npm run types:check",
+    "release": "npm run check && npm version patch && git push origin main --follow-tags"
   },
   "publishConfig": {
     "access": "public"

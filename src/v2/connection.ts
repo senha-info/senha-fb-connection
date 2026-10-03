@@ -1,34 +1,62 @@
 import * as Firebird from 'node-firebird';
 import type { FirebirdConnectionOptions, PoolMetrics, QueryParam, TransactionContext } from './types.js';
 
+/**
+ * Firebird database connection manager backed by a native connection pool.
+ * Provides connection pooling, automatic resource cleanup, transaction management with savepoints,
+ * and health checking.
+ */
 export class FirebirdConnection {
   private pool: Firebird.ConnectionPool;
+
+  /**
+   * Escapes values safely for raw SQL queries using node-firebird escape utility.
+   */
   public escape = Firebird.escape;
+
+  /**
+   * Parsed node-firebird connection options used by the pool.
+   */
   public readonly options: Firebird.Options;
+
+  /**
+   * Optional timezone configured for date and timestamp serialization.
+   */
   public readonly timeZone?: string;
 
+  /**
+   * Creates a new FirebirdConnection instance with a native connection pool.
+   *
+   * @param options Connection and pool configuration options.
+   */
   constructor(options: FirebirdConnectionOptions) {
-    this.timeZone = options.timeZone;
-    const concurrency = options.concurrency ?? 20;
+    const {
+      concurrency = 20,
+      timeZone,
+      lowercaseKeys = true,
+      encoding = 'WIN1252',
+      blobAsText = true,
+      pageSize = 4096,
+      min = 0,
+      idleTimeoutMillis = 30000,
+      connectTimeout = 10000,
+      ...restOptions
+    } = options;
+
+    this.timeZone = timeZone;
 
     this.options = {
-      host: options.host,
-      port: options.port,
-      user: options.user,
-      password: options.password,
-      database: options.database,
-      role: options.role,
-      encoding: options.encoding ?? 'WIN1252',
-      blobAsText: options.blobAsText ?? true,
-      lowercase_keys: options.lowercaseKeys ?? true,
-      pageSize: options.pageSize ?? 4096,
-      min: options.min ?? 0,
-      idleTimeoutMillis: options.idleTimeoutMillis ?? 30000,
-      connectTimeout: options.connectTimeout ?? 10000,
-      statementCacheSize: options.statementCacheSize,
+      ...restOptions,
+      encoding,
+      blobAsText,
+      lowercase_keys: lowercaseKeys,
+      pageSize,
+      min,
+      idleTimeoutMillis,
+      connectTimeout,
     };
 
-    // Inicializa o Connection Pool nativo com fila de espera FIFO (pending)
+    // Initialize native connection pool with FIFO pending queue
     this.pool = Firebird.pool(concurrency, this.options);
 
     this.initialize().catch((err) => {
@@ -37,9 +65,14 @@ export class FirebirdConnection {
   }
 
   /**
-   * Executa uma consulta SQL utilizando uma conexão do pool.
-   * A conexão física é adquirida, a query é executada e a conexão é devolvida
-   * automaticamente ao pool no término (via bloco finally).
+   * Executes a SQL query using a connection leased from the pool.
+   * The physical connection is acquired, the query is executed, and the connection
+   * is automatically returned to the pool upon completion (via finally block).
+   *
+   * @template T Expected row record type.
+   * @param query SQL query statement.
+   * @param params Optional parameterized query values.
+   * @returns Array of query result rows.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async execute<T = any>(query: string, params: QueryParam[] = []): Promise<T[]> {
@@ -56,9 +89,14 @@ export class FirebirdConnection {
   }
 
   /**
-   * Executa um conjunto de operações dentro de uma transação com auto-commit e auto-rollback.
-   * Se o callback `work` for concluído com sucesso, o commit é executado.
-   * Se qualquer exceção for lançada, o rollback é efetuado automaticamente.
+   * Executes a set of operations within a transaction with auto-commit and auto-rollback.
+   * If the `work` callback completes successfully, the transaction is committed.
+   * If any exception is thrown, the transaction is automatically rolled back.
+   *
+   * @template T Result type returned by the callback.
+   * @param work Callback receiving the transaction context.
+   * @param isolation Optional transaction isolation level or transaction options.
+   * @returns The result returned by the callback.
    */
   async transaction<T>(
     work: (tx: TransactionContext) => Promise<T>,
@@ -73,16 +111,22 @@ export class FirebirdConnection {
   }
 
   /**
-   * Executa um callback com uma conexão individual do pool, garantindo
-   * que ela seja liberada de volta ao pool após o uso.
-   * Útil para streams, lote (batch) ou sequências customizadas.
+   * Leases an individual database connection from the pool and executes the provided callback,
+   * ensuring the connection is safely released back to the pool afterwards.
+   * Useful for streams, batch operations, or custom sequential workflows.
+   *
+   * @template T Result type.
+   * @param work Callback receiving the native database handle.
+   * @returns The result returned by the callback.
    */
   async withConnection<T>(work: (db: Firebird.Database) => Promise<T> | T): Promise<T> {
     return this.pool.withConnection(work);
   }
 
   /**
-   * Verifica a conectividade e saúde da conexão com o banco de dados.
+   * Checks database connectivity and health by executing a simple query against `RDB$DATABASE`.
+   *
+   * @returns `true` if connected successfully, `false` otherwise.
    */
   async ping(): Promise<boolean> {
     try {
@@ -94,47 +138,47 @@ export class FirebirdConnection {
   }
 
   /**
-   * Encerra graciosamente todas as conexões abertas no pool.
+   * Gracefully terminates and closes all open connections in the pool.
    */
   async destroy(): Promise<void> {
     await this.pool.destroyAsync();
   }
 
   /**
-   * Alias de conveniência para destroy().
+   * Convenience alias for {@link destroy}.
    */
   async close(): Promise<void> {
     return this.destroy();
   }
 
   /**
-   * Retorna a instância subjacente do ConnectionPool do node-firebird.
+   * Returns the underlying native node-firebird ConnectionPool instance.
    */
   getPool(): Firebird.ConnectionPool {
     return this.pool;
   }
 
-  /** Total de conexões físicas gerenciadas pelo pool (em uso + ociosas). */
+  /** Total number of physical connections managed by the pool (in use + idle). */
   get totalCount(): number {
     return this.pool.totalCount;
   }
 
-  /** Conexões atualmente ociosas e aquecidas no pool. */
+  /** Number of connections currently idle and warm in the pool. */
   get idleCount(): number {
     return this.pool.idleCount;
   }
 
-  /** Conexões atualmente em uso ativo por queries ou transações. */
+  /** Number of connections currently in active use by queries or transactions. */
   get activeCount(): number {
     return this.pool.activeCount;
   }
 
-  /** Quantidade de requisições aguardando liberação de vaga na fila do pool. */
+  /** Number of requests currently queued in the FIFO pool queue waiting for a free connection. */
   get waitingCount(): number {
     return this.pool.waitingCount;
   }
 
-  /** Snapshot consolidado das métricas de concorrência do pool. */
+  /** Consolidated metrics snapshot of the connection pool. */
   get metrics(): PoolMetrics {
     return {
       totalCount: this.totalCount,
@@ -145,7 +189,7 @@ export class FirebirdConnection {
   }
 
   /**
-   * Garante a criação do domínio VARCHAR5000 no catálogo Firebird se ele não existir.
+   * Ensures the `VARCHAR5000` domain exists in the Firebird catalog, creating it if absent.
    */
   async initialize(): Promise<void> {
     try {
@@ -169,7 +213,7 @@ export class FirebirdConnection {
         await this.execute(insert);
       }
     } catch {
-      // Ignora erro se o domínio já foi criado concorrentemente ou sem privilégios DDL
+      // Ignore error if domain was created concurrently or user lacks DDL privileges
     }
   }
 
