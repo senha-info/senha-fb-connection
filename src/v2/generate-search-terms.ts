@@ -20,7 +20,7 @@ export class GenerateSearchTerms {
    * @param request Search request parameters including search terms, attributes, and optional primary key.
    * @returns SQL search condition string or an empty string if no search terms provided.
    */
-  public execute<T>({ search, primaryKey, attributes, minWordLength = 3 }: GetSearchTermsRequest<T>): string {
+  public execute<T>({ search, primaryKey, attributes, minWordLength = 1 }: GetSearchTermsRequest<T>): string {
     if (!search || !search.trim()) {
       return '';
     }

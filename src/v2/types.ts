@@ -286,7 +286,7 @@ export interface GetSearchTermsRequest<T> {
   /**
    * Minimum length of each word to be included in the search condition.
    * Prevents short connector words from bloating the query.
-   * @default 3
+   * @default 1
    */
   minWordLength?: number;
 }
